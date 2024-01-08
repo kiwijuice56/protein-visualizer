@@ -12,7 +12,7 @@ import math
 from camera import FirstPersonCamera
 
 pdbparser = Bio.PDB.PDBParser(QUIET=True)
-prot = pdbparser.get_structure("example protein", "example-protein.pdb")
+prot = pdbparser.get_structure("example protein", "alphafold-generation.pdb")
 
 atoms = [atom for atom in prot.get_atoms()]
 residues = [residue for residue in prot.get_residues()]
@@ -112,8 +112,8 @@ def on_draw():
             adj = len(residues) + adj
         if adj >= len(residues):
             adj -= len(residues)
-        snippet = f"{f'%0{int(math.log10(len(residues))) + 1}d' % adj}:{residues[adj].get_resname()} "
-        color = tuple([255] * 4 if i == 0 else [64 - abs(i) * 8] * 3 + [255])
+        snippet = f"{f'%0{int(math.log10(len(residues))) + 1}d' % adj}:{'%3s' % residues[adj].get_resname()} "
+        color = tuple([255] * 4 if i == 0 else [64 - abs(i) * 12] * 3 + [255])
         document.insert_text(len(document.text), snippet, {"color": color})
 
     layout = pyglet.text.layout.TextLayout(document, multiline=True, width=win.width, height=win.height)
