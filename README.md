@@ -11,5 +11,5 @@ A simple program to display Protein Data Bank (PDB) protein files in 3D.
 
 ## Libraries
 - `pyglet 1.5.28` as an OpenGL interface
-- `Bio 1.6.2` to parse PDB files
-- FirstPersonCamera script from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
+- `bio 1.6.2` to parse PDB files
+- `camera.py` script from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
