@@ -1,7 +1,7 @@
 import Bio.PDB
 import Bio.SeqRecord
 
-# Pyglet version 1.5.x (https://pyglet.readthedocs.io/en/pyglet-1.5-maintenance/)
+# Pyglet version 1.5.28 (https://pyglet.readthedocs.io/en/pyglet-1.5-maintenance/)
 import pyglet
 from pyglet.window import key
 from pyglet.gl import *
@@ -10,7 +10,7 @@ from pyglet.gl import *
 from camera import FirstPersonCamera
 
 pdbparser = Bio.PDB.PDBParser(QUIET=True)
-prot = pdbparser.get_structure("example protein", "alfaro_worm.pdb")
+prot = pdbparser.get_structure("example protein", "example-protein.pdb")
 
 atoms = [atom for atom in prot.get_atoms()]
 amino_acids = [amino_acid for amino_acid in prot.get_residues()]
