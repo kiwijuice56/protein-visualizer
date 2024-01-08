@@ -10,29 +10,30 @@ from pyglet.gl import *
 from camera import FirstPersonCamera
 
 pdbparser = Bio.PDB.PDBParser(QUIET=True)
-prot = pdbparser.get_structure("alfaro_worm", "alfaro_worm.pdb")
+prot = pdbparser.get_structure("example protein", "alfaro_worm.pdb")
 
 atoms = [atom for atom in prot.get_atoms()]
-amino_acids = {}
+amino_acids = [amino_acid for amino_acid in prot.get_residues()]
+residue_index_range = {}
 
 # Determine which atoms belong to each amino acid
 atom_idx = 0
 for i, amino_acid in enumerate(prot.get_residues()):
     residue_atoms = [atom for atom in amino_acid.get_atoms()]
-    amino_acids[i] = [atom_idx, atom_idx + len(residue_atoms)]
+    residue_index_range[i] = [atom_idx, atom_idx + len(residue_atoms)]
     atom_idx += len(residue_atoms)
-
 
 # Initialize the window and camera
 win = pyglet.window.Window()
 win.set_exclusive_mouse(True)
+win.set_fullscreen(True)
 cam = FirstPersonCamera(win, movement_speed=16)
 
 
 def color_atom(atom, highlight=False):
     # Based on CPK coloring (https://en.wikipedia.org/wiki/CPK_coloring)
     colors = {"C": (45, 45, 45), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56), "P": (235, 145, 56),
-              "_": (100, 100, 100), "*": (246, 77, 255)}
+              "_": (255, 255, 255), "*": (246, 77, 255)}
     if highlight:
         return [min(255, c + 128) for c in colors[atom.get_id()[0]]]
     elif atom.get_id()[0] in colors:
@@ -48,7 +49,7 @@ residue_idx = 0
 
 for atom in prot.get_atoms():
     point_coord.extend(atom.get_coord())
-    draw_color.extend(color_atom(atom, atom in atoms[amino_acids[0][0]: amino_acids[0][1]]))
+    draw_color.extend(color_atom(atom, atom in atoms[residue_index_range[0][0]: residue_index_range[0][1]]))
 
 vertex_list = pyglet.graphics.vertex_list(len(atoms), ('v3f', point_coord), ('c3B', draw_color))
 
@@ -63,15 +64,15 @@ def on_key_press(symbol, modifiers):
     if symbol == key._2:
         residue_idx -= 1
 
-    if residue_idx >= len(amino_acids):
+    if residue_idx >= len(residue_index_range):
         residue_idx = 0
     elif residue_idx < 0:
-        residue_idx = len(amino_acids) - 1
+        residue_idx = len(residue_index_range) - 1
 
     if not old_idx == residue_idx:
-        for i in range(amino_acids[old_idx][0], amino_acids[old_idx][1]):
+        for i in range(residue_index_range[old_idx][0], residue_index_range[old_idx][1]):
             vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i])
-        for i in range(amino_acids[residue_idx][0], amino_acids[residue_idx][1]):
+        for i in range(residue_index_range[residue_idx][0], residue_index_range[residue_idx][1]):
             vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i], True)
 
 
@@ -93,8 +94,24 @@ def on_draw():
 
     # Draw the protein
     cam.draw()
-
     vertex_list.draw(pyglet.gl.GL_POINTS)
+
+    # Reset projection to 2D for UI
+    glLoadIdentity()
+    glOrtho(0, win.width, -win.height, 0, 0, 1000)
+
+    text = (f"{prot.get_id()}\n"
+            f"\"{amino_acids[residue_idx].get_resname()}\" residue at index {str(residue_idx)}"
+            )
+
+    document = pyglet.text.decode_text(text)
+    document.set_style(0, len(document.text), {"font_name": "Consolas", "font_size": 16, "color": (255, 255, 255, 255)})
+
+    layout = pyglet.text.layout.TextLayout(document, multiline=True, width=win.width, height=win.height)
+    layout.anchor_x = "left"
+    layout.anchor_y = "top"
+
+    layout.draw()
 
     return pyglet.event.EVENT_HANDLED
 
