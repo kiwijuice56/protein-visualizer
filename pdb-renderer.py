@@ -12,7 +12,7 @@ import math
 from camera import FirstPersonCamera
 
 pdbparser = Bio.PDB.PDBParser(QUIET=True)
-prot = pdbparser.get_structure("example protein", "alphafold-generation.pdb")
+prot = pdbparser.get_structure("example protein", "proteins/alphafold-generation.pdb")
 
 atoms = [atom for atom in prot.get_atoms()]
 residues = [residue for residue in prot.get_residues()]
@@ -92,7 +92,7 @@ def on_draw():
     glEnable(GL_DEPTH_TEST)
     glMatrixMode(GL_PROJECTION)
     gluPerspective(65, win.width / float(win.height), 0.01, 512)
-    glPointSize(8)
+    glPointSize(6.5)
 
     # Draw the protein
     cam.draw()
