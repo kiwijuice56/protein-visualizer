@@ -35,6 +35,7 @@ win.set_fullscreen(True)
 cam = FirstPersonCamera(win, movement_speed=16)
 
 residue_idx = 0
+point_size = 8
 color_mode = "atomic"
 
 
@@ -51,6 +52,8 @@ def color_atom(atom, highlight=False, mode="atomic"):
         base_color = atomic_colors[atom.get_id()[0]] if atom.get_id()[0] in atomic_colors else atomic_colors['_']
     elif mode == "residue":
         base_color = residue_colors[atom_residue_map[atom] % len(residue_colors)]
+    elif mode == "contrast":
+        base_color = (255, 213, 25) if highlight else (46, 29, 115)
 
     if highlight:
         return tuple([min(255, c + 128) for c in base_color])
@@ -74,6 +77,7 @@ vertex_list = pyglet.graphics.vertex_list(len(atoms), ('v3f', point_coord), ('c3
 def on_key_press(symbol, modifiers):
     global color_mode
     global residue_idx
+    global point_size
 
     old_idx = residue_idx
 
@@ -82,16 +86,24 @@ def on_key_press(symbol, modifiers):
     if symbol == key.RIGHT:
         residue_idx += 1
 
+    if symbol == key.UP:
+        point_size += 1
+    if symbol == key.DOWN:
+        point_size -= 1
+    point_size = max(1, min(10, point_size))
+
     old_mode = color_mode
     if symbol == key._1:
         color_mode = "atomic"
     if symbol == key._2:
         color_mode = "residue"
+    if symbol == key._3:
+        color_mode = "contrast"
     if not color_mode == old_mode:
         for i in range(0, len(atoms)):
-            vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i], mode=color_mode)
+            draw_color[i * 3: i * 3 + 3] = color_atom(atoms[i], mode=color_mode)
         for i in range(residue_index_range[residue_idx][0], residue_index_range[residue_idx][1]):
-            vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i], highlight=True, mode=color_mode)
+            draw_color[i * 3: i * 3 + 3] = color_atom(atoms[i], highlight=True, mode=color_mode)
 
     if residue_idx >= len(residue_index_range):
         residue_idx = 0
@@ -100,9 +112,9 @@ def on_key_press(symbol, modifiers):
 
     if not old_idx == residue_idx:
         for i in range(residue_index_range[old_idx][0], residue_index_range[old_idx][1]):
-            vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i], mode=color_mode)
+            draw_color[i * 3: i * 3 + 3] = color_atom(atoms[i], mode=color_mode)
         for i in range(residue_index_range[residue_idx][0], residue_index_range[residue_idx][1]):
-            vertex_list.colors[i * 3: i * 3 + 3] = color_atom(atoms[i], highlight=True, mode=color_mode)
+            draw_color[i * 3: i * 3 + 3] = color_atom(atoms[i], highlight=True, mode=color_mode)
 
 
 win.push_handlers(on_key_press)
@@ -119,19 +131,18 @@ def on_draw():
     glDisable(GL_DEPTH_TEST)
     glMatrixMode(GL_PROJECTION)
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)
-    gluPerspective(65, win.width / float(win.height), 0.01, 512)
+    gluPerspective(65, win.width / float(win.height), 0.5, 512)
 
     # Draw the protein
     cam.draw()
 
-    glPointSize(18)
-    original_colors = [b for b in vertex_list.colors]
+    glPointSize(point_size * 2)
     vertex_list.colors = [32] * len(vertex_list.colors)
     vertex_list.draw(pyglet.gl.GL_POINTS)
 
-    glPointSize(9)
+    glPointSize(point_size)
     glEnable(GL_DEPTH_TEST)
-    vertex_list.colors = original_colors
+    vertex_list.colors = draw_color
     vertex_list.draw(pyglet.gl.GL_POINTS)
 
     # Reset projection to 2D for UI
@@ -155,6 +166,7 @@ def on_draw():
         snippet = f"{f'%0{int(math.log10(len(residues))) + 1}d' % adj}:{'%3s' % residues[adj].get_resname()} "
         color = tuple((255, 230, 0, 255) if i == 0 else [200 - abs(i) * 24] * 3 + [255])
         document.insert_text(len(document.text), snippet, {"color": color})
+    document.insert_text(len(document.text), "\nhttps://github.com/kiwijuice56/pdb-renderer", {"color": (255, 255, 255, 255)})
 
     layout = pyglet.text.layout.TextLayout(document, multiline=True, width=win.width, height=win.height)
     layout.anchor_x = "left"

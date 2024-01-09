@@ -10,8 +10,10 @@ using AlphaFold 2)
 - `Shift/Space`: Translate the camera vertically
 - `Mouse`: Rotate the camera
 - `Left/Right Arrow`: Shift which residue is currently highlighted
+- `Up/Down Arrow`: Increase and decrease atom point size
 - `1`: Set color mode to `atomic` in which atoms are colored according to CPK guidelines
 - `2`: Set color mode to `residue` in which atoms are colored according to which residue they belong to
+- `3`: Set color mode to `contrast` in which highlighted atoms are much brighter than the surrounding atoms
 - `Esc`: Close the program
 
 ## Libraries
