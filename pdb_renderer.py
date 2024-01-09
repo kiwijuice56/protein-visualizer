@@ -28,7 +28,7 @@ class PDBRenderer:
         CPK = 0
         CHAINBOW = 1
         CONTRAST = 2
-        POISSON = 3
+        RESIDUE = 3
 
     def __init__(self, pdb_path, window, color_mode=ColorMode.CPK, point_size=8, outline=True):
         self.window = window
@@ -43,6 +43,8 @@ class PDBRenderer:
         self.point_size = point_size
         self.outline = outline
 
+        self.residue_type = {}
+
         # Initialize data from PDB file
         atom_index = 0
         for i, bio_residue in enumerate(self.bio_structure.get_residues()):
@@ -51,6 +53,8 @@ class PDBRenderer:
             for bio_atom in bio_residue.get_atoms():
                 residue_atoms.append(Atom(bio_atom, residue, atom_index))
                 atom_index += 1
+            if not bio_residue.get_resname() in self.residue_type:
+                self.residue_type[bio_residue.get_resname()] = len(self.residue_type)
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
 
@@ -90,10 +94,11 @@ class PDBRenderer:
                 base_color = cpk_colors[bio_id[0]] if bio_id[0] in cpk_colors else cpk_colors['_']
             case self.ColorMode.CHAINBOW:
                 base_color = residue_colors[atom.residue.index % len(residue_colors)]
-            case self.ColorMode.POISSON:
-                base_color = poisson_colors[atom.residue.index % len(poisson_colors)]
             case self.ColorMode.CONTRAST:
                 base_color = (255, 213, 25) if highlight else (46, 29, 115)
+            case self.ColorMode.RESIDUE:
+                res_type = atom.residue.bio_residue.get_resname()
+                base_color = poisson_colors[self.residue_type[res_type] % len(poisson_colors)]
 
         return tuple([min(255, b + 128) for b in base_color]) if highlight else base_color
 

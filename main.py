@@ -40,7 +40,7 @@ def on_key_press(symbol, modifiers):
     if symbol == key._3:
         pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CONTRAST)
     if symbol == key._4:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.POISSON)
+        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.RESIDUE)
 
 
 window.push_handlers(on_key_press)
