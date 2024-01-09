@@ -29,7 +29,7 @@ class PDBRenderer:
         RESIDUE = 1
         CONTRAST = 2
 
-    def __init__(self, pdb_path, window, color_mode=ColorMode.CPK, point_size=8):
+    def __init__(self, pdb_path, window, color_mode=ColorMode.CPK, point_size=8, outline=True):
         self.window = window
 
         pdbparser = Bio.PDB.PDBParser(QUIET=True)
@@ -40,6 +40,7 @@ class PDBRenderer:
         self.highlighted_index = 0
         self.color_mode = color_mode
         self.point_size = point_size
+        self.outline = outline
 
         # Initialize data from PDB file
         atom_index = 0
@@ -106,15 +107,23 @@ class PDBRenderer:
         self.update_colors(self.residues[old_index].atoms[0].index, self.residues[old_index].atoms[-1].index + 1)
         self.update_colors(self.residues[new_index].atoms[0].index, self.residues[new_index].atoms[-1].index + 1)
 
+    def set_point_size(self, new_size):
+        if new_size <= 0:
+            new_size = 1
+        if new_size > 10:
+            new_size = 10
+        self.point_size = new_size
+
     def draw(self):
         glClearColor(1.0, 1.0, 1.0, 1.0)
 
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)
         glEnable(GL_POINT_SMOOTH)
-        glDisable(GL_DEPTH_TEST)
 
-        glPointSize(self.point_size * 2)
-        self.outline_vertices.draw(pyglet.gl.GL_POINTS)
+        if self.outline:
+            glDisable(GL_DEPTH_TEST)
+            glPointSize(self.point_size * 2)
+            self.outline_vertices.draw(pyglet.gl.GL_POINTS)
 
         glPointSize(self.point_size)
         glEnable(GL_DEPTH_TEST)

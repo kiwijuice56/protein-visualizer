@@ -15,7 +15,7 @@ window = pyglet.window.Window()
 window.set_exclusive_mouse(True)
 window.set_fullscreen(True)
 cam = FirstPersonCamera(window, movement_speed=16)
-pdb_renderer = PDBRenderer("proteins/alphafold-generation.pdb", window)
+pdb_renderer = PDBRenderer("proteins/3iyn.pdb", window)
 
 
 # Add inputs for the renderer parameters
@@ -26,9 +26,12 @@ def on_key_press(symbol, modifiers):
         pdb_renderer.set_highlighted_index(pdb_renderer.highlighted_index + 1)
 
     if symbol == key.UP:
-        pdb_renderer.point_size += 1
+        pdb_renderer.set_point_size(pdb_renderer.point_size + 1)
     if symbol == key.DOWN:
-        pdb_renderer.point_size -= 1
+        pdb_renderer.set_point_size(pdb_renderer.point_size - 1)
+
+    if symbol == key.O:
+        pdb_renderer.outline = not pdb_renderer.outline
 
     if symbol == key._1:
         pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CPK)
@@ -46,7 +49,7 @@ def on_draw():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
     glMatrixMode(GL_PROJECTION)
-    gluPerspective(65, window.width / float(window.height), 0.5, 512)
+    gluPerspective(65, window.width / float(window.height), 0.8, 512)
 
     # Draw the 3D protein
     cam.draw()
