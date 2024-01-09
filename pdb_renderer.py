@@ -26,8 +26,9 @@ class Atom:
 class PDBRenderer:
     class ColorMode(Enum):
         CPK = 0
-        RESIDUE = 1
+        CHAINBOW = 1
         CONTRAST = 2
+        POISSON = 3
 
     def __init__(self, pdb_path, window, color_mode=ColorMode.CPK, point_size=8, outline=True):
         self.window = window
@@ -76,14 +77,21 @@ class PDBRenderer:
                       "_": (255, 255, 255)}
         residue_colors = [(191, 53, 15), (204, 135, 24), (212, 209, 25), (110, 204, 33), (33, 204, 130), (33, 178, 204),
                           (36, 51, 212), (133, 36, 212), (212, 36, 145)]
+        poisson_colors = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
+                          (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
+                          (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
+                          (167, 103, 114), (204, 134, 125), (224, 186, 139), (195, 130, 82), (161, 86, 60),
+                          (111, 52, 45), (68, 39, 31)]
         base_color = (128, 128, 128)
 
         match self.color_mode:
             case self.ColorMode.CPK:
                 bio_id = atom.bio_atom.get_id()
                 base_color = cpk_colors[bio_id[0]] if bio_id[0] in cpk_colors else cpk_colors['_']
-            case self.ColorMode.RESIDUE:
+            case self.ColorMode.CHAINBOW:
                 base_color = residue_colors[atom.residue.index % len(residue_colors)]
+            case self.ColorMode.POISSON:
+                base_color = poisson_colors[atom.residue.index % len(poisson_colors)]
             case self.ColorMode.CONTRAST:
                 base_color = (255, 213, 25) if highlight else (46, 29, 115)
 

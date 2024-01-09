@@ -15,7 +15,7 @@ window = pyglet.window.Window()
 window.set_exclusive_mouse(True)
 window.set_fullscreen(True)
 cam = FirstPersonCamera(window, movement_speed=16)
-pdb_renderer = PDBRenderer("proteins/3iyn.pdb", window)
+pdb_renderer = PDBRenderer("proteins/alphafold-generation.pdb", window)
 
 
 # Add inputs for the renderer parameters
@@ -36,9 +36,11 @@ def on_key_press(symbol, modifiers):
     if symbol == key._1:
         pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CPK)
     if symbol == key._2:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.RESIDUE)
+        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CHAINBOW)
     if symbol == key._3:
         pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CONTRAST)
+    if symbol == key._4:
+        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.POISSON)
 
 
 window.push_handlers(on_key_press)

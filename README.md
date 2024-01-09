@@ -11,9 +11,7 @@ using AlphaFold 2)
 - `Left/Right Arrow`: Shift which residue is currently highlighted
 - `Up/Down Arrow`: Increase and decrease atom point size
 - `O`: Toggles atom outline
-- `1`: Set color mode to `atomic` in which atoms are colored according to CPK guidelines
-- `2`: Set color mode to `residue` in which atoms are colored according to which residue they belong to
-- `3`: Set color mode to `contrast` in which highlighted atoms are much brighter than the surrounding atoms
+- `1/2/3/4`: Switch the color palette
 - `Esc`: Close the program
 
 ## Libraries
