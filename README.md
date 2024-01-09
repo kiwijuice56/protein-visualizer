@@ -9,7 +9,9 @@ using AlphaFold 2)
 - `WASD`: Translate the camera
 - `Shift/Space`: Translate the camera vertically
 - `Mouse`: Rotate the camera
-- `1/2`: Shift which residue is currently highlighted
+- `Left/Right Arrow`: Shift which residue is currently highlighted
+- `1`: Set color mode to `atomic` in which atoms are colored according to CPK guidelines
+- `2`: Set color mode to `residue` in which atoms are colored according to which residue they belong to
 - `Esc`: Close the program
 
 ## Libraries
