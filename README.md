@@ -1,6 +1,5 @@
 # PDB-Renderer
-A simple program to display Protein Data Bank (PDB) protein files in 3D. Run `pdb-renderer.py` after installing the 
-dependencies. Sample proteins in `proteins` are sourced from RCSB PDB (except the generation, created by myself
+A simple program to display Protein Data Bank (PDB) protein files in 3D. See `main.py` for example usage. Sample proteins in `proteins` are sourced from RCSB PDB (except the generation, created by myself
 using AlphaFold 2)
 
 ![Protein rendered using this program](picture_demonstration.png)
