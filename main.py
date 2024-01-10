@@ -1,3 +1,6 @@
+from pdb_renderer import PDBRenderer
+from embedding_renderer import EmbeddingRenderer
+from protein import Protein
 
 import pyglet
 from pyglet.window import key
@@ -5,35 +8,58 @@ from pyglet.gl import *
 
 import math
 
+import colour
+
 # Camera code from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
 from camera import FirstPersonCamera
-
-from pdb_renderer import PDBRenderer
-from embedding_renderer import EmbeddingRenderer
-
-
-# Initialize the window and camera
-from protein import Protein
 
 window = pyglet.window.Window()
 window.set_exclusive_mouse(True)
 window.set_fullscreen(True)
 cam = FirstPersonCamera(window, movement_speed=16)
-
 protein = Protein("proteins/alphafold_generation.pdb",
                   "proteins/alphafold_generation_sequence.fa",
                   "proteins/alphafold_generation_embeddings.h5")
 
+initial_color = colour.Color(hue=0, saturation=0.8, luminance=0.5)
+for i, residue in enumerate(protein.residues):
+    initial_color.hue = (i / len(protein.residues)) * 0.8
+    residue.color = [int(b * 255) for b in initial_color.rgb]
+
 pdb_renderer = PDBRenderer(protein, window)
 embedding_renderer = EmbeddingRenderer(protein, window)
+
+highlight_index = 0
 
 
 # Add inputs for the renderer parameters
 def on_key_press(symbol, modifiers):
+    global highlight_index
+    old_index = highlight_index
     if symbol == key.LEFT:
-        pdb_renderer.set_highlighted_index(pdb_renderer.highlighted_index - 1)
+        highlight_index -= 1
     if symbol == key.RIGHT:
-        pdb_renderer.set_highlighted_index(pdb_renderer.highlighted_index + 1)
+        highlight_index += 1
+    if highlight_index < 0:
+        highlight_index = len(protein.residues) + highlight_index
+    elif highlight_index >= len(protein.residues):
+        highlight_index -= len(protein.residues)
+
+    new_color = colour.Color(hue=(float(old_index) / len(protein.residues)) * 0.8, saturation=0.8, luminance=0.5)
+    protein.residues[old_index].color = [int(b * 255) for b in new_color.rgb]
+
+    new_color = colour.Color(hue=(float(highlight_index) / len(protein.residues)) * 0.8, saturation=0.8, luminance=0.5)
+    protein.residues[highlight_index].color = [min(255, int(b * 255) + 128) for b in new_color.rgb]
+
+    if old_index != highlight_index:
+        pdb_renderer.update_colors(protein.residues[old_index].atoms[0].index,
+                                   protein.residues[old_index].atoms[-1].index + 1)
+        pdb_renderer.update_colors(protein.residues[highlight_index].atoms[0].index,
+                                   protein.residues[highlight_index].atoms[-1].index + 1)
+
+        embedding_renderer.update_colors(old_index, old_index + 1)
+        embedding_renderer.update_colors(highlight_index, highlight_index + 1)
+
 
     if symbol == key.UP:
         pdb_renderer.set_point_size(pdb_renderer.point_size + 1)
@@ -43,21 +69,13 @@ def on_key_press(symbol, modifiers):
     if symbol == key.O:
         pdb_renderer.outline = not pdb_renderer.outline
 
-    if symbol == key._1:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CPK)
-    if symbol == key._2:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CHAINBOW)
-    if symbol == key._3:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.CONTRAST)
-    if symbol == key._4:
-        pdb_renderer.set_color_mode(pdb_renderer.ColorMode.RESIDUE)
-
 
 window.push_handlers(on_key_press)
 
 
 @window.event
 def on_draw():
+    global highlight_index
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
     glMatrixMode(GL_PROJECTION)
@@ -66,7 +84,6 @@ def on_draw():
     # Draw the 3D protein
     cam.draw()
 
-    pdb_renderer.bounding_box = [0, -window.height, int(window.width * 0.6), window.height]
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
@@ -90,7 +107,7 @@ def on_draw():
 
     # Draw the adjacent residue label
     for i in range(-2, 4):
-        adj = pdb_renderer.highlighted_index + i
+        adj = highlight_index + i
         if adj < 0:
             adj = len(protein.residues) + adj
         if adj >= len(protein.residues):

@@ -3,7 +3,7 @@ from pyglet.gl import *
 
 
 class EmbeddingRenderer:
-    def __init__(self, protein, window, bounding_box=None, point_size=8):
+    def __init__(self, protein, window, bounding_box=None, point_size=6):
         """
         @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window
@@ -16,9 +16,9 @@ class EmbeddingRenderer:
         # Find the region the points lie in, with some added padding
         padding = [4, 4, 4, 4]   # left, top, right, bottom
         min_point = [min(self.protein.embedding_points[0::2]) - padding[0],
-                     min(self.protein.embedding_points[1::2]) - padding[2]]
-        max_point = [max(self.protein.embedding_points[0::2]) - padding[1],
-                     max(self.protein.embedding_points[1::2]) - padding[3]]
+                     min(self.protein.embedding_points[1::2]) - padding[1]]
+        max_point = [max(self.protein.embedding_points[0::2]) + padding[2],
+                     max(self.protein.embedding_points[1::2]) + padding[3]]
 
         # Define a 2D space where the data is contained
         self.data_bounding_box = [min_point[0], min_point[1], max_point[0], max_point[1]]
@@ -62,7 +62,17 @@ class EmbeddingRenderer:
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),
-            ('c3B', [64] * (len(self.protein.embedding_points) // 2 * 3)))
+            ('c3B', [0] * (len(self.protein.embedding_points) // 2 * 3)))
+        self.update_colors()
+
+    def color_residue(self, residue):
+        return residue.color
+
+    def update_colors(self, start=0, end=-1):
+        if end == -1:
+            end = len(self.protein.residues)
+        for i in range(start, end):
+            self.vertices.colors[i * 3: i * 3 + 3] = self.color_residue(self.protein.residues[i])
 
     def draw(self):
         glEnable(GL_SCISSOR_TEST)
