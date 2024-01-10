@@ -1,26 +1,7 @@
-import Bio.PDB
-import Bio.SeqRecord
-
 import pyglet
 from pyglet.gl import *
 
 from enum import Enum
-
-
-# Wrapper class for collections of atoms
-class Residue:
-    def __init__(self, atoms, bio_residue, index):
-        self.atoms = atoms
-        self.bio_residue = bio_residue
-        self.index = index
-
-
-# Wrapper class for single atoms
-class Atom:
-    def __init__(self, bio_atom, residue, index):
-        self.bio_atom = bio_atom
-        self.residue = residue
-        self.index = index
 
 
 class PDBRenderer:
@@ -28,11 +9,10 @@ class PDBRenderer:
         CPK = 0
         CHAINBOW = 1
         CONTRAST = 2
-        RESIDUE = 3
 
-    def __init__(self, pdb_path, window, bounding_box=None, color_mode=ColorMode.CPK, point_size=8, outline=True):
+    def __init__(self, protein, window, bounding_box=None, color_mode=ColorMode.CPK, point_size=8, outline=True):
         """
-        @param pdb_path: Path to a `.pdb` file containing the 3D protein structure
+        @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window
         @param color_mode: Initial color mode of plotted points
         @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
@@ -40,11 +20,7 @@ class PDBRenderer:
         @param outline: Whether plotted points have an outline
         """
         self.window = window
-
-        pdbparser = Bio.PDB.PDBParser(QUIET=True)
-        self.bio_structure = pdbparser.get_structure("id", pdb_path)
-        self.residues = []
-        self.atoms = []
+        self.protein = protein
 
         self.highlighted_index = 0
         self.color_mode = color_mode
@@ -58,34 +34,21 @@ class PDBRenderer:
 
         self.residue_type = {}
 
-        # Initialize data from PDB file
-        atom_index = 0
-        for i, bio_residue in enumerate(self.bio_structure.get_residues()):
-            residue_atoms = []
-            residue = Residue(residue_atoms, bio_residue, i)
-            for bio_atom in bio_residue.get_atoms():
-                residue_atoms.append(Atom(bio_atom, residue, atom_index))
-                atom_index += 1
-            if not bio_residue.get_resname() in self.residue_type:
-                self.residue_type[bio_residue.get_resname()] = len(self.residue_type)
-            self.residues.append(residue)
-            self.atoms.extend(residue_atoms)
-
         # Create vertex data for OpenGL
         point_coordinates = []
-        for atom in self.atoms:
+        for atom in self.protein.atoms:
             point_coordinates.extend(atom.bio_atom.get_coord())
 
         self.atom_vertices = pyglet.graphics.vertex_list(
-            len(self.atoms),
+            len(self.protein.atoms),
             ('v3f', point_coordinates),
-            ('c3B', [0] * len(self.atoms) * 3))
+            ('c3B', [0] * len(self.protein.atoms) * 3))
         self.update_colors()
 
         self.outline_vertices = pyglet.graphics.vertex_list(
-            len(self.atoms),
+            len(self.protein.atoms),
             ('v3f', point_coordinates),
-            ('c3B', [32] * len(self.atoms) * 3))
+            ('c3B', [32] * len(self.protein.atoms) * 3))
 
     def color_atom(self, atom, highlight=False):
         # Based on CPK coloring (https://en.wikipedia.org/wiki/CPK_coloring)
@@ -109,18 +72,15 @@ class PDBRenderer:
                 base_color = residue_colors[atom.residue.index % len(residue_colors)]
             case self.ColorMode.CONTRAST:
                 base_color = (255, 213, 25) if highlight else (46, 29, 115)
-            case self.ColorMode.RESIDUE:
-                res_type = atom.residue.bio_residue.get_resname()
-                base_color = poisson_colors[self.residue_type[res_type] % len(poisson_colors)]
 
         return tuple([min(255, b + 128) for b in base_color]) if highlight else base_color
 
     def update_colors(self, start=0, end=-1):
         if end == -1:
-            end = len(self.atoms)
+            end = len(self.protein.atoms)
         for i in range(start, end):
-            is_highlighted = self.atoms[i] in self.residues[self.highlighted_index].atoms
-            self.atom_vertices.colors[i * 3: i * 3 + 3] = self.color_atom(self.atoms[i], is_highlighted)
+            is_highlighted = self.protein.atoms[i] in self.protein.residues[self.highlighted_index].atoms
+            self.atom_vertices.colors[i * 3: i * 3 + 3] = self.color_atom(self.protein.atoms[i], is_highlighted)
 
     def set_color_mode(self, new_color_mode):
         self.color_mode = new_color_mode
@@ -130,8 +90,8 @@ class PDBRenderer:
         old_index = self.highlighted_index
         self.highlighted_index = new_index
 
-        self.update_colors(self.residues[old_index].atoms[0].index, self.residues[old_index].atoms[-1].index + 1)
-        self.update_colors(self.residues[new_index].atoms[0].index, self.residues[new_index].atoms[-1].index + 1)
+        self.update_colors(self.protein.residues[old_index].atoms[0].index, self.protein.residues[old_index].atoms[-1].index + 1)
+        self.update_colors(self.protein.residues[new_index].atoms[0].index, self.protein.residues[new_index].atoms[-1].index + 1)
 
     def set_point_size(self, new_size):
         if new_size <= 0:

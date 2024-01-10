@@ -1,6 +1,6 @@
+
 import pyglet
 from pyglet.window import key
-from pyglet import shapes
 from pyglet.gl import *
 
 import math
@@ -11,19 +11,21 @@ from camera import FirstPersonCamera
 from pdb_renderer import PDBRenderer
 from embedding_renderer import EmbeddingRenderer
 
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-import h5py
-
 
 # Initialize the window and camera
+from protein import Protein
+
 window = pyglet.window.Window()
 window.set_exclusive_mouse(True)
 window.set_fullscreen(True)
 cam = FirstPersonCamera(window, movement_speed=16)
-pdb_renderer = PDBRenderer("proteins/alphafold_generation.pdb", window)
-embedding_renderer = EmbeddingRenderer("proteins/alphafold_generation_embeddings.h5",
-                                       "proteins/alphafold_generation_sequence.fa", window)
+
+protein = Protein("proteins/alphafold_generation.pdb",
+                  "proteins/alphafold_generation_sequence.fa",
+                  "proteins/alphafold_generation_embeddings.h5")
+
+pdb_renderer = PDBRenderer(protein, window)
+embedding_renderer = EmbeddingRenderer(protein, window)
 
 
 # Add inputs for the renderer parameters
@@ -67,6 +69,7 @@ def on_draw():
     pdb_renderer.bounding_box = [0, -window.height, int(window.width * 0.6), window.height]
     pdb_renderer.draw()
 
+    # Draw the 2D embeddings
     embedding_renderer.set_bounding_box([int(window.width * 0.6), -window.height, int(window.width * 0.4), window.height])
     embedding_renderer.draw()
 
@@ -89,11 +92,11 @@ def on_draw():
     for i in range(-2, 4):
         adj = pdb_renderer.highlighted_index + i
         if adj < 0:
-            adj = len(pdb_renderer.residues) + adj
-        if adj >= len(pdb_renderer.residues):
-            adj -= len(pdb_renderer.residues)
-        digit_length = int(math.log10(len(pdb_renderer.residues))) + 1
-        snippet = f"{f'%0{digit_length}d' % adj}:{'%3s' % pdb_renderer.residues[adj].bio_residue.get_resname()} "
+            adj = len(protein.residues) + adj
+        if adj >= len(protein.residues):
+            adj -= len(protein.residues)
+        digit_length = int(math.log10(len(protein.residues))) + 1
+        snippet = f"{f'%0{digit_length}d' % adj}:{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
         color = tuple((255, 230, 0, 255) if i == 0 else [200 - abs(i) * 24] * 3 + [255])
         document.insert_text(len(document.text), snippet, {"color": color})
 

@@ -1,34 +1,24 @@
-import h5py
 import pyglet
-from sklearn.manifold import TSNE
 from pyglet.gl import *
 
 
 class EmbeddingRenderer:
-    def __init__(self, embedding_path, sequence_path, window, bounding_box=None, point_size=8):
+    def __init__(self, protein, window, bounding_box=None, point_size=8):
         """
-        @param embedding_path: Path to a `.h5` file containing a single database with the protein's embeddings
-        @param sequence_path: Path to a `.fa` file (FASTA format) containing the protein's amino acid sequence
+        @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window
         @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
         @param point_size: Initial area of plotted points
         """
+        self.protein = protein
         self.window = window
 
-        embedding_file = h5py.File(embedding_path, 'r')
-        sequence_file = open(sequence_path, 'r')
-
-        title = sequence_file.readline()[1:].strip()
-        sequence = sequence_file.readline().strip()
-
-        embeddings = embedding_file[title][()]
-
-        # Use the t-SNE algorithm to transform the embeddings into 2D vectors
-        self.transform = TSNE(n_components=2, learning_rate='auto', init='random', perplexity=3).fit_transform(embeddings)
-        self.points = self.transform.flatten().tolist()
-
         # Find the region the points lie in, with some added padding
-        min_point, max_point = self.transform.min(axis=0) - [4.0, 4.0], self.transform.max(axis=0) + [4.0, 4.0]
+        padding = [4, 4, 4, 4]   # left, top, right, bottom
+        min_point = [min(self.protein.embedding_points[0::2]) - padding[0],
+                     min(self.protein.embedding_points[1::2]) - padding[2]]
+        max_point = [max(self.protein.embedding_points[0::2]) - padding[1],
+                     max(self.protein.embedding_points[1::2]) - padding[3]]
 
         # Define a 2D space where the data is contained
         self.data_bounding_box = [min_point[0], min_point[1], max_point[0], max_point[1]]
@@ -37,7 +27,7 @@ class EmbeddingRenderer:
 
         # Normalize the points to the domain [0, 1] for more convenient plotting
         self.norm_points = []
-        for x, y in zip(self.points[::2], self.points[1::2]):
+        for x, y in zip(self.protein.embedding_points[::2], self.protein.embedding_points[1::2]):
             dist_x = x - self.data_bounding_box[0]
             dist_y = y - self.data_bounding_box[1]
 
@@ -70,9 +60,9 @@ class EmbeddingRenderer:
             scaled_y = y * self.bounding_box[2] + self.bounding_box[1]
             self.scaled_points.extend([scaled_x, scaled_y])
         self.vertices = pyglet.graphics.vertex_list(
-            len(self.points) // 2,
+            len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),
-            ('c3B', [64] * (len(self.points) // 2 * 3)))
+            ('c3B', [64] * (len(self.protein.embedding_points) // 2 * 3)))
 
     def draw(self):
         glEnable(GL_SCISSOR_TEST)
