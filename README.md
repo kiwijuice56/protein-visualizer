@@ -11,10 +11,12 @@ Work in progress.
 - `Left/Right Arrow`: Shift which residue is currently highlighted
 - `Up/Down Arrow`: Increase and decrease atom point size
 - `O`: Toggles atom outline
-- `1/2/3/4`: Switch the color palette
 - `Esc`: Close the program
 
 ## Libraries
 - `pyglet 1.5.28` as an OpenGL interface
 - `bio 1.6.2` to parse PDB files
+- `scikit-learn 1.3.2` for the t-SNE algorithm
+- `h5py` to parse h5 database files
+- `colour` for convenient color arithmetic
 - `camera.py` script from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc

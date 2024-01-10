@@ -14,7 +14,8 @@ class PDBRenderer:
         self.window = window
         self.protein = protein
 
-        self.point_size = point_size
+        self.point_size = 0
+        self.set_point_size(point_size)
         self.outline = outline
 
         if bounding_box is None:
@@ -41,9 +42,19 @@ class PDBRenderer:
             ('c3B', [32] * len(self.protein.atoms) * 3))
 
     def color_atom(self, atom):
+        """
+        Returns the color of a particular atom depending on the renderer settings
+        @param atom: The Atom to color
+        @return: A length-3 RGB array, [0, 255]
+        """
         return atom.residue.color
 
     def update_colors(self, start=0, end=-1):
+        """
+        Updates the rendered colors within the given range
+        @param start: Beginning atom index, inclusive
+        @param end: Final atom index, exclusive
+        """
         if end == -1:
             end = len(self.protein.atoms)
         for i in range(start, end):

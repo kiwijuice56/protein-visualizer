@@ -51,8 +51,12 @@ class EmbeddingRenderer:
 
         self.point_size = point_size
 
-    def set_bounding_box(self, new_box):
-        self.bounding_box = new_box
+    def set_bounding_box(self, bounding_box):
+        """
+        Updates the bounding box and scales rendered vertices to fit
+        @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
+        """
+        self.bounding_box = bounding_box
 
         self.scaled_points = []
         for x, y in zip(self.norm_points[::2], self.norm_points[1::2]):
@@ -66,9 +70,19 @@ class EmbeddingRenderer:
         self.update_colors()
 
     def color_residue(self, residue):
+        """
+        Returns the color of a particular residue depending on the renderer settings
+        @param residue: The Residue to color
+        @return: A length-3 RGB array, [0, 255]
+        """
         return residue.color
 
     def update_colors(self, start=0, end=-1):
+        """
+        Updates the rendered colors within the given range
+        @param start: Beginning residue index, inclusive
+        @param end: Final residue index, exclusive
+        """
         if end == -1:
             end = len(self.protein.residues)
         for i in range(start, end):

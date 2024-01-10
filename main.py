@@ -60,7 +60,6 @@ def on_key_press(symbol, modifiers):
         embedding_renderer.update_colors(old_index, old_index + 1)
         embedding_renderer.update_colors(highlight_index, highlight_index + 1)
 
-
     if symbol == key.UP:
         pdb_renderer.set_point_size(pdb_renderer.point_size + 1)
     if symbol == key.DOWN:
