@@ -30,7 +30,15 @@ class PDBRenderer:
         CONTRAST = 2
         RESIDUE = 3
 
-    def __init__(self, pdb_path, window, color_mode=ColorMode.CPK, point_size=8, outline=True):
+    def __init__(self, pdb_path, window, bounding_box=None, color_mode=ColorMode.CPK, point_size=8, outline=True):
+        """
+        @param pdb_path: Path to a `.pdb` file containing the 3D protein structure
+        @param window: Reference to the parent pyglet.window.Window
+        @param color_mode: Initial color mode of plotted points
+        @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
+        @param point_size: Initial area of plotted points
+        @param outline: Whether plotted points have an outline
+        """
         self.window = window
 
         pdbparser = Bio.PDB.PDBParser(QUIET=True)
@@ -42,7 +50,11 @@ class PDBRenderer:
         self.color_mode = color_mode
         self.point_size = point_size
         self.outline = outline
-        self.bounding_box = (0, -window.height, window.width, window.height)
+
+        if bounding_box is None:
+            self.bounding_box = (0, -window.height, window.width, window.height)
+        else:
+            self.bounding_box = bounding_box
 
         self.residue_type = {}
 
@@ -129,11 +141,10 @@ class PDBRenderer:
         self.point_size = new_size
 
     def draw(self):
-        glClearColor(1.0, 1.0, 1.0, 1.0)
-
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_SCISSOR_TEST)
+
+        glClearColor(1.0, 1.0, 1.0, 1.0)
         glScissor(self.bounding_box[0], self.bounding_box[1] + self.window.height, self.bounding_box[2], self.bounding_box[3])
 
         if self.outline:
@@ -145,4 +156,7 @@ class PDBRenderer:
         glEnable(GL_DEPTH_TEST)
         self.atom_vertices.draw(pyglet.gl.GL_POINTS)
 
+        # Clean up
         glDisable(GL_SCISSOR_TEST)
+        glDisable(GL_POINT_SMOOTH)
+        glDisable(GL_DEPTH_TEST)
