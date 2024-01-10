@@ -42,6 +42,7 @@ class PDBRenderer:
         self.color_mode = color_mode
         self.point_size = point_size
         self.outline = outline
+        self.bounding_box = (0, -window.height, window.width, window.height)
 
         self.residue_type = {}
 
@@ -132,6 +133,8 @@ class PDBRenderer:
 
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE)
         glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_SCISSOR_TEST)
+        glScissor(self.bounding_box[0], self.bounding_box[1] + self.window.height, self.bounding_box[2], self.bounding_box[3])
 
         if self.outline:
             glDisable(GL_DEPTH_TEST)
@@ -141,3 +144,5 @@ class PDBRenderer:
         glPointSize(self.point_size)
         glEnable(GL_DEPTH_TEST)
         self.atom_vertices.draw(pyglet.gl.GL_POINTS)
+
+        glDisable(GL_SCISSOR_TEST)

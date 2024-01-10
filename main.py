@@ -1,5 +1,6 @@
 import pyglet
 from pyglet.window import key
+from pyglet import shapes
 from pyglet.gl import *
 
 import math
@@ -8,6 +9,11 @@ import math
 from camera import FirstPersonCamera
 
 from pdb_renderer import PDBRenderer
+from embedding_renderer import EmbeddingRenderer
+
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import h5py
 
 
 # Initialize the window and camera
@@ -15,7 +21,9 @@ window = pyglet.window.Window()
 window.set_exclusive_mouse(True)
 window.set_fullscreen(True)
 cam = FirstPersonCamera(window, movement_speed=16)
-pdb_renderer = PDBRenderer("proteins/alphafold-generation.pdb", window)
+pdb_renderer = PDBRenderer("proteins/alphafold_generation.pdb", window)
+embedding_renderer = EmbeddingRenderer("proteins/alphafold_generation_embeddings.h5",
+                                       "proteins/alphafold_generation_sequence.fa", window)
 
 
 # Add inputs for the renderer parameters
@@ -55,7 +63,12 @@ def on_draw():
 
     # Draw the 3D protein
     cam.draw()
+
+    pdb_renderer.bounding_box = [0, -window.height, int(window.width * 0.6), window.height]
     pdb_renderer.draw()
+
+    embedding_renderer.set_bounding_box([int(window.width * 0.6), -window.height, int(window.width * 0.4), window.height])
+    embedding_renderer.draw()
 
     # Reset projection to 2D for UI
     glLoadIdentity()

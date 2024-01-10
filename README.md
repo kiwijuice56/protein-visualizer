@@ -1,9 +1,8 @@
-# PDB-Renderer
-A simple program to display Protein Data Bank (PDB) protein files in 3D. See `main.py` for example usage. Sample proteins in `proteins` are sourced from RCSB PDB (except the generation, created by myself
-using AlphaFold2).
+# protein-visualizer
+A program to visualize how amino acid residues contribute to protein structure and function.
+Work in progress.
 
 ![Protein rendered using this program](picture_demonstration.png)
-![Protein rendered using pymol](pymol_demonstration.png)
 
 ## Controls
 - `WASD`: Translate the camera
