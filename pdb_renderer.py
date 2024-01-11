@@ -1,33 +1,11 @@
+from input_handler import InputHandler
+
 import numpy as np
 import pyglet
 from pyglet.gl import *
 
 
 class Camera3D(object):
-    class InputHandler(object):
-        def __init__(self):
-            self.dx_left = 0
-            self.dy_left = 0
-            self.dx_middle = 0
-            self.dy_middle = 0
-            self.scroll_y = 0
-            self.bounding_box = [0, 0, 0, 0]
-
-        def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-            self.scroll_y = scroll_y
-
-        def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-            if x < self.bounding_box[0] or x - self.bounding_box[0] > self.bounding_box[2]:
-                return
-            if y < self.bounding_box[1] or y - self.bounding_box[1] > self.bounding_box[3]:
-                return
-            if buttons & pyglet.window.mouse.LEFT:
-                self.dx_left = dx
-                self.dy_left = dy
-            if buttons & pyglet.window.mouse.RIGHT:
-                self.dx_middle = dx
-                self.dy_middle = dy
-
     def __init__(self, window, movement_speed=0.08, mouse_sensitivity=0.01):
         self.pivot_pos = np.array([0, 0, -32])
         self.camera_pos = np.array([12, 0, np.pi/2])
@@ -37,7 +15,7 @@ class Camera3D(object):
         self.global_up_dir = np.array([0, -1, 0])
         self.local_up_dir = np.array([0, -1, 0])
 
-        self.input_handler = Camera3D.InputHandler()
+        self.input_handler = InputHandler()
 
         window.push_handlers(self.input_handler)
 
@@ -195,3 +173,6 @@ class PDBRenderer:
         glDisable(GL_SCISSOR_TEST)
         glDisable(GL_POINT_SMOOTH)
         glDisable(GL_DEPTH_TEST)
+
+    def update(self):
+        self.camera.update()

@@ -2,6 +2,27 @@ import numpy as np
 import pyglet
 from pyglet.gl import *
 
+from input_handler import InputHandler
+
+
+class Camera2D(object):
+    def __init__(self, window, movement_speed=0.5, mouse_sensitivity=0.01):
+        self.pos = np.zeros(2)
+
+        self.input_handler = InputHandler()
+
+        window.push_handlers(self.input_handler)
+
+        self.movement_speed = movement_speed
+        self.mouse_sensitivity = mouse_sensitivity
+
+    def update(self):
+        self.pos[0] += self.input_handler.dx_left * self.movement_speed
+        self.input_handler.dx_left = 0
+
+        self.pos[1] += self.input_handler.dy_left * self.movement_speed
+        self.input_handler.dy_left = 0
+
 
 class EmbeddingRenderer:
     def __init__(self, protein, window, bounding_box=None, point_size=6):
@@ -13,6 +34,7 @@ class EmbeddingRenderer:
         """
         self.protein = protein
         self.window = window
+        self.camera = Camera2D(window)
 
         # Find the region the points lie in, with extra padding to prevent points from clipping against the screen
         padding_amount = 4
@@ -58,13 +80,14 @@ class EmbeddingRenderer:
         @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
         """
         self.bounding_box = bounding_box
+        self.camera.input_handler.bounding_box = bounding_box
 
         for i in range(0, len(self.norm_points), 2):
             x = self.norm_points[i]
             y = self.norm_points[i + 1]
 
-            self.scaled_points[i] = x * self.bounding_box[2] + self.bounding_box[0]
-            self.scaled_points[i + 1] = y * self.bounding_box[2] + self.bounding_box[1]
+            self.scaled_points[i] = self.camera.pos[0] + x * self.bounding_box[2] + self.bounding_box[0]
+            self.scaled_points[i + 1] = self.camera.pos[1] + y * self.bounding_box[2] + self.bounding_box[1]
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),

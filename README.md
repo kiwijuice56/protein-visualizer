@@ -5,9 +5,8 @@ Work in progress.
 ![Protein rendered using this program](picture_demonstration.png)
 
 ## Controls
-- `WASD`: Translate the camera
-- `Shift/Space`: Translate the camera vertically
-- `Mouse`: Rotate the camera
+- `Left Mouse Drag`: Move the camera in both 3D and 2D space
+- `Right Mouse Drag`: Rotate the camera in 3D space
 - `Left/Right Arrow`: Shift which residue is currently highlighted
 - `Up/Down Arrow`: Increase and decrease atom point size
 - `O`: Toggles atom outline
@@ -19,4 +18,3 @@ Work in progress.
 - `scikit-learn 1.3.2` for the t-SNE algorithm
 - `h5py` to parse h5 database files
 - `colour` for convenient color arithmetic
-- `camera.py` script from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc

@@ -81,7 +81,7 @@ def on_draw():
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, 16, int(window.width * 0.4), window.height])
+    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, 16, int(window.width * 0.4), int(window.width * 0.4)])
     embedding_renderer.draw()
 
     # Reset projection to 2D for UI
@@ -125,6 +125,7 @@ def on_draw():
 
 
 def on_update(delta_time):
+    embedding_renderer.camera.update()
     pdb_renderer.camera.update()
 
 
