@@ -10,16 +10,12 @@ import math
 
 import colour
 
-# Camera code from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
-from camera import Camera3D
-
 
 # Initialize window
 window = pyglet.window.Window(resizable=True)
 window.set_exclusive_mouse(False)
 
-# Initialize camera and protein
-cam = Camera3D(window, movement_speed=0.06)
+# Initialize protein
 protein = Protein("proteins/alphafold_generation.pdb",
                   "proteins/alphafold_generation_sequence.fa",
                   "proteins/alphafold_generation_embeddings.h5")
@@ -29,6 +25,7 @@ for i, residue in enumerate(protein.residues):
     initial_color.hue = (i / len(protein.residues)) * 0.8
     residue.color = [int(b * 255) for b in initial_color.rgb]
 
+# Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
 embedding_renderer = EmbeddingRenderer(protein, window)
 
@@ -78,19 +75,13 @@ window.push_handlers(on_key_press)
 @window.event
 def on_draw():
     global highlight_index
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glLoadIdentity()
-    glMatrixMode(GL_PROJECTION)
-    gluPerspective(65, window.width / float(window.height), 0.8, 512)
 
     # Draw the 3D protein
-    cam.draw()
-
-    pdb_renderer.set_bounding_box([0, -window.height, window.width, window.height])
+    pdb_renderer.set_bounding_box([0, 0, window.width, window.height])
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, -window.height + 16, int(window.width * 0.4), window.height])
+    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, 16, int(window.width * 0.4), window.height])
     embedding_renderer.draw()
 
     # Reset projection to 2D for UI
@@ -134,7 +125,7 @@ def on_draw():
 
 
 def on_update(delta_time):
-    cam.update(delta_time)
+    pdb_renderer.camera.update()
 
 
 if __name__ == "__main__":

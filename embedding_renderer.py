@@ -46,7 +46,7 @@ class EmbeddingRenderer:
         # Default to full-screen render
         self.bounding_box = []
         if bounding_box is None:
-            self.set_bounding_box([0, -window.height, window.width, window.height])
+            self.set_bounding_box([0, 0, window.width, window.height])
         else:
             self.set_bounding_box(bounding_box)
 
@@ -94,14 +94,14 @@ class EmbeddingRenderer:
         glEnable(GL_SCISSOR_TEST)
         glEnable(GL_POINT_SMOOTH)
 
-        glScissor(self.bounding_box[0], self.bounding_box[1] + self.window.height, self.bounding_box[2], self.bounding_box[3])
+        glScissor(*self.bounding_box)
         glClearColor(1.0, 1.0, 1.0, 1.0)
         glPointSize(self.point_size)
 
         glLoadIdentity()
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
-        glOrtho(0, self.window.width, -self.window.height, 0, 0, 1000)
+        glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
 
         self.vertices.draw(pyglet.gl.GL_POINTS)
 
