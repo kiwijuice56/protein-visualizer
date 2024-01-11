@@ -118,7 +118,6 @@ class EmbeddingRenderer:
         glEnable(GL_POINT_SMOOTH)
 
         glScissor(*self.bounding_box)
-        glClearColor(1.0, 1.0, 1.0, 1.0)
         glPointSize(self.point_size)
 
         glLoadIdentity()
@@ -126,6 +125,9 @@ class EmbeddingRenderer:
         glEnable(GL_BLEND)
         glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
 
+        background = pyglet.shapes.Rectangle(*self.bounding_box, color=(255, 255, 255))
+        background.opacity = 210
+        background.draw()
         self.vertices.draw(pyglet.gl.GL_POINTS)
 
         # Clean up
