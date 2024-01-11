@@ -13,12 +13,12 @@ class EmbeddingRenderer:
         self.protein = protein
         self.window = window
 
-        # Find the region the points lie in, with some added padding
-        padding = [4, 4, 4, 4]   # left, top, right, bottom
-        min_point = [min(self.protein.embedding_points[0::2]) - padding[0],
-                     min(self.protein.embedding_points[1::2]) - padding[1]]
-        max_point = [max(self.protein.embedding_points[0::2]) + padding[2],
-                     max(self.protein.embedding_points[1::2]) + padding[3]]
+        # Find the region the points lie in, with extra padding to prevent points from clipping against the screen
+        padding_amount = 4
+        min_point = [min(self.protein.embedding_points[0::2]) - padding_amount,
+                     min(self.protein.embedding_points[1::2]) - padding_amount]
+        max_point = [max(self.protein.embedding_points[0::2]) + padding_amount,
+                     max(self.protein.embedding_points[1::2]) + padding_amount]
 
         # Define a 2D space where the data is contained
         self.data_bounding_box = [min_point[0], min_point[1], max_point[0], max_point[1]]

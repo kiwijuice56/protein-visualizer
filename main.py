@@ -13,9 +13,12 @@ import colour
 # Camera code from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
 from camera import FirstPersonCamera
 
-window = pyglet.window.Window()
+
+# Initialize window
+window = pyglet.window.Window(fullscreen=True)
 window.set_exclusive_mouse(True)
-window.set_fullscreen(True)
+
+# Initialize camera and protein
 cam = FirstPersonCamera(window, movement_speed=16)
 protein = Protein("proteins/alphafold_generation.pdb",
                   "proteins/alphafold_generation_sequence.fa",
@@ -86,7 +89,7 @@ def on_draw():
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.6), -window.height, int(window.width * 0.4), window.height])
+    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, -window.height + 16, int(window.width * 0.4), window.height])
     embedding_renderer.draw()
 
     # Reset projection to 2D for UI
