@@ -67,6 +67,13 @@ class PDBRenderer:
             new_size = 10
         self.point_size = new_size
 
+    def set_bounding_box(self, bounding_box):
+        """
+        Updates the bounding box and scales rendered vertices to fit
+        @param bounding_box: Rendering region as an array of format [bottom_left_x, bottom_left_y, width, height]
+        """
+        self.bounding_box = bounding_box
+
     def draw(self):
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_SCISSOR_TEST)

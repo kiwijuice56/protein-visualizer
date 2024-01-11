@@ -15,8 +15,8 @@ class EmbeddingRenderer:
 
         # Find the region the points lie in, with extra padding to prevent points from clipping against the screen
         padding_amount = 4
-        min_point = [min(self.protein.embedding_points[0::2]) - padding_amount,
-                     min(self.protein.embedding_points[1::2]) - padding_amount]
+        min_point = [min(self.protein.embedding_points[0::2]),
+                     min(self.protein.embedding_points[1::2])]
         max_point = [max(self.protein.embedding_points[0::2]) + padding_amount,
                      max(self.protein.embedding_points[1::2]) + padding_amount]
 

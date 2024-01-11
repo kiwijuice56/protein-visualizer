@@ -15,8 +15,8 @@ from camera import FirstPersonCamera
 
 
 # Initialize window
-window = pyglet.window.Window(fullscreen=True)
-window.set_exclusive_mouse(True)
+window = pyglet.window.Window(resizable=True)
+window.set_exclusive_mouse(False)
 
 # Initialize camera and protein
 cam = FirstPersonCamera(window, movement_speed=16)
@@ -86,6 +86,7 @@ def on_draw():
     # Draw the 3D protein
     cam.draw()
 
+    pdb_renderer.set_bounding_box([0, -window.height, window.width, window.height])
     pdb_renderer.draw()
 
     # Draw the 2D embeddings

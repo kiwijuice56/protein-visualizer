@@ -51,4 +51,3 @@ class Protein:
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
         transform = TSNE(n_components=2, learning_rate='auto', init='random', perplexity=3).fit_transform(embeddings)
         self.embedding_points = transform.flatten().tolist()
-        
