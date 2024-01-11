@@ -11,7 +11,7 @@ import math
 import colour
 
 # Camera code from https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
-from camera import FirstPersonCamera
+from camera import Camera3D
 
 
 # Initialize window
@@ -19,7 +19,7 @@ window = pyglet.window.Window(resizable=True)
 window.set_exclusive_mouse(False)
 
 # Initialize camera and protein
-cam = FirstPersonCamera(window, movement_speed=16)
+cam = Camera3D(window, movement_speed=0.06)
 protein = Protein("proteins/alphafold_generation.pdb",
                   "proteins/alphafold_generation_sequence.fa",
                   "proteins/alphafold_generation_embeddings.h5")

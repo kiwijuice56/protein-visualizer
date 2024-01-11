@@ -1,153 +1,86 @@
-# https://gist.github.com/mr-linch/f6dacd2a069887a47fbc
 import math
-import collections
 
 import pyglet
+from pyglet.gl import *
 
 
-class FirstPersonCamera(object):
-    """First person camera implementation
-    Usage:
-        import pyglet
-        from pyglet.gl import *
-        from camera import FirstPersonCamera
-        window = pyglet.window.Window(fullscreen=True)
-        window.set_exclusive_mouse(True)
-        camera = FirstPersonCamera(window)
-        @window.event
-        def on_draw():
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glLoadIdentity()
-            camera.draw()
-            # Your draw code here
-            return pyglet.event.EVENT_HANDLED
-        def on_update(delta_time):
-            camera.update(delta_time)
-            # Your update code here
-        if __name__ == '__main__':
-            pyglet.clock.schedule(on_update)
-            pyglet.app.run()
-    """
-
-    DEFAULT_MOVEMENT_SPEED = 10.0
-
-    DEFAULT_MOUSE_SENSITIVITY = 0.25
-
-    DEFAULT_KEY_MAP = {
-        'forward': pyglet.window.key.W,
-        'backward': pyglet.window.key.S,
-        'left': pyglet.window.key.A,
-        'right': pyglet.window.key.D,
-        'up': pyglet.window.key.SPACE,
-        'down': pyglet.window.key.LSHIFT
-    }
-
+class Camera3D(object):
     class InputHandler(object):
         def __init__(self):
-            self.pressed = collections.defaultdict(bool)
             self.dx = 0
             self.dy = 0
+            self.dx2 = 0
+            self.dy2 = 0
+            self.scroll_y = 0
 
-        def on_key_press(self, symbol, modifiers):
-            self.pressed[symbol] = True
+        def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+            self.scroll_y = scroll_y
 
-        def on_key_release(self, symbol, modifiers):
-            self.pressed[symbol] = False
+        def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+            if buttons & pyglet.window.mouse.LEFT:
+                self.dx = dx
+                self.dy = dy
+            if buttons & pyglet.window.mouse.MIDDLE:
+                self.dx2 = dx
+                self.dy2 = dy
 
-        def on_mouse_motion(self, x, y, dx, dy):
-            self.dx = dx
-            self.dy = dy
+    def __init__(self, window, movement_speed=16, mouse_sensitivity=0.01):
+        self.pivot_pos = [0, 0, -32]
+        self.camera_pos = [12, 0, math.pi/2]
+        self.forward_dir = [0, 0, 1]
+        self.global_up_dir = [0, -1, 0]
+        self.local_up_dir = [0, -1, 0]
+        self.right_dir = [0, 0, 0]
 
-    def __init__(self, window, position=(0, 0, 0), key_map=DEFAULT_KEY_MAP, movement_speed=DEFAULT_MOVEMENT_SPEED, mouse_sensitivity=DEFAULT_MOUSE_SENSITIVITY, y_inv=True):
-        """Create camera object
-        Arguments:
-            window -- pyglet window which camera attach
-            position -- position of camera
-            key_map -- dict like FirstPersonCamera.DEFAULT_KEY_MAP
-            movement_speed -- speed of camera move (scalar)
-            mouse_sensitivity -- sensitivity of mouse (scalar)
-            y_inv -- inversion turn above y-axis
-        """
+        self.input_handler = Camera3D.InputHandler()
 
-        self.__position = list(position)
+        window.push_handlers(self.input_handler)
 
-        self.__yaw = 0.0
-        self.__pitch = 0.0
-
-        self.__input_handler = FirstPersonCamera.InputHandler()
-
-        window.push_handlers(self.__input_handler)
-
-        self.y_inv = y_inv
-        self.key_map = key_map
         self.movement_speed = movement_speed
         self.mouse_sensitivity = mouse_sensitivity
 
-    def yaw(self, yaw):
-        """Turn above x-axis"""
-        self.__yaw += yaw * self.mouse_sensitivity
+    def move_horizontal(self, distance):
+        self.pivot_pos = [self.right_dir[i] * distance + self.pivot_pos[i] for i in range(3)]
 
-    def pitch(self, pitch):
-        """Turn above y-axis"""
-        self.__pitch += pitch * self.mouse_sensitivity * ((-1) if self.y_inv else 1)
-
-    def move_forward(self, distance):
-        """Move forward on distance"""
-        self.__position[0] -= distance * math.sin(math.radians(self.__yaw))
-        self.__position[2] += distance * math.cos(math.radians(self.__yaw))
-
-    def move_backward(self, distance):
-        """Move backward on distance"""
-        self.__position[0] += distance * math.sin(math.radians(self.__yaw))
-        self.__position[2] -= distance * math.cos(math.radians(self.__yaw))
-
-    def move_left(self, distance):
-        """Move left on distance"""
-        self.__position[0] -= distance * math.sin(math.radians(self.__yaw - 90))
-        self.__position[2] += distance * math.cos(math.radians(self.__yaw - 90))
-
-    def move_right(self, distance):
-        """Move right on distance"""
-        self.__position[0] -= distance * math.sin(math.radians(self.__yaw + 90))
-        self.__position[2] += distance * math.cos(math.radians(self.__yaw + 90))
-
-    def move_up(self, distance):
-        """Move up on distance"""
-        self.__position[1] -= distance
-
-    def move_down(self, distance):
-        """Move down on distance"""
-        self.__position[1] += distance
+    def move_vertical(self, distance):
+        self.pivot_pos = [self.local_up_dir[i] * -distance + self.pivot_pos[i] for i in range(3)]
 
     def update(self, delta_time):
-        """Update camera state"""
-        self.yaw(self.__input_handler.dx)
-        self.__input_handler.dx = 0
+        self.move_horizontal(self.input_handler.dx * self.movement_speed)
+        self.input_handler.dx = 0
 
-        self.pitch(self.__input_handler.dy)
-        self.__input_handler.dy = 0
+        self.move_vertical(self.input_handler.dy * self.movement_speed)
+        self.input_handler.dy = 0
 
-        if self.__input_handler.pressed[self.key_map['forward']]:
-            self.move_forward(delta_time * self.movement_speed)
+        self.camera_pos[1] -= self.input_handler.dx2 * self.mouse_sensitivity
+        self.input_handler.dx2 = 0
 
-        if self.__input_handler.pressed[self.key_map['backward']]:
-            self.move_backward(delta_time * self.movement_speed)
+        self.camera_pos[2] += self.input_handler.dy2 * self.mouse_sensitivity
+        self.camera_pos[2] = max(0.1, min(math.pi - 0.1, self.camera_pos[2]))
+        self.input_handler.dy2 = 0
 
-        if self.__input_handler.pressed[self.key_map['left']]:
-            self.move_left(delta_time * self.movement_speed)
+        self.camera_pos[0] -= self.input_handler.scroll_y
+        self.camera_pos[0] = max(0.05, self.camera_pos[0])
+        self.input_handler.scroll_y = 0
 
-        if self.__input_handler.pressed[self.key_map['right']]:
-            self.move_right(delta_time * self.movement_speed)
+    @staticmethod
+    def cross(a, b):
+        c = [a[1] * b[2] - a[2] * b[1],
+             a[2] * b[0] - a[0] * b[2],
+             a[0] * b[1] - a[1] * b[0]]
 
-        if self.__input_handler.pressed[self.key_map['up']]:
-            self.move_up(delta_time * self.movement_speed)
-
-        if self.__input_handler.pressed[self.key_map['down']]:
-            self.move_down(delta_time * self.movement_speed)
+        return c
 
     def draw(self):
-        """Apply transform"""
-        pyglet.gl.glRotatef(self.__pitch, 1.0, 0.0, 0.0)
-        pyglet.gl.glRotatef(self.__yaw, 0.0, 1.0, 0.0)
-        pyglet.gl.glTranslatef(*self.__position)
-        
+        camera_trans = [0, 0, 0]
+        camera_trans[0] = self.camera_pos[0] * math.sin(self.camera_pos[2]) * math.cos(self.camera_pos[1])
+        camera_trans[2] = self.camera_pos[0] * math.sin(self.camera_pos[2]) * math.sin(self.camera_pos[1])
+        camera_trans[1] = self.camera_pos[0] * math.cos(self.camera_pos[2])
+
+        self.forward_dir = [component / self.camera_pos[0] for component in camera_trans]
+        self.right_dir = self.cross(self.forward_dir, self.global_up_dir)
+        self.local_up_dir = self.cross(self.forward_dir, self.right_dir)
+
+        gluLookAt(0, 0, 0, *self.forward_dir, *self.global_up_dir)
+        glTranslatef(*camera_trans)
+        glTranslatef(*self.pivot_pos)
