@@ -25,7 +25,7 @@ class InputHandler(object):
         if buttons & pyglet.window.mouse.LEFT:
             self.dx_left = dx
             self.dy_left = dy
-        if buttons & pyglet.window.mouse.RIGHT:
+        if buttons & (pyglet.window.mouse.MIDDLE | pyglet.window.mouse.RIGHT):
             self.dx_middle = dx
             self.dy_middle = dy
         return pyglet.event.EVENT_HANDLED
