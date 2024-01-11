@@ -1,3 +1,4 @@
+import numpy as np
 import pyglet
 from pyglet.gl import *
 
@@ -26,18 +27,18 @@ class EmbeddingRenderer:
         self.data_width = self.data_bounding_box[2] - self.data_bounding_box[1]
 
         # Normalize the points to the domain [0, 1] for more convenient plotting
-        self.norm_points = []
-        for x, y in zip(self.protein.embedding_points[::2], self.protein.embedding_points[1::2]):
+        self.norm_points = np.zeros(len(self.protein.embedding_points))
+        for i in range(0, len(self.protein.embedding_points), 2):
+            x = self.protein.embedding_points[i]
+            y = self.protein.embedding_points[i + 1]
             dist_x = x - self.data_bounding_box[0]
             dist_y = y - self.data_bounding_box[1]
 
-            norm_x = dist_x / self.data_width
-            norm_y = dist_y / self.data_height
-
-            self.norm_points.extend([norm_x, norm_y])
+            self.norm_points[i] = dist_x / self.data_width
+            self.norm_points[i + 1] = dist_y / self.data_height
 
         # Define a list of points scaled to the rendering bounding box
-        self.scaled_points = []
+        self.scaled_points = np.zeros(len(self.protein.embedding_points))
 
         # Define the pyglet vertex list
         self.vertices = None
@@ -58,11 +59,12 @@ class EmbeddingRenderer:
         """
         self.bounding_box = bounding_box
 
-        self.scaled_points = []
-        for x, y in zip(self.norm_points[::2], self.norm_points[1::2]):
-            scaled_x = x * self.bounding_box[2] + self.bounding_box[0]
-            scaled_y = y * self.bounding_box[2] + self.bounding_box[1]
-            self.scaled_points.extend([scaled_x, scaled_y])
+        for i in range(0, len(self.norm_points), 2):
+            x = self.norm_points[i]
+            y = self.norm_points[i + 1]
+
+            self.scaled_points[i] = x * self.bounding_box[2] + self.bounding_box[0]
+            self.scaled_points[i + 1] = y * self.bounding_box[2] + self.bounding_box[1]
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),

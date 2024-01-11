@@ -1,3 +1,4 @@
+import numpy as np
 import pyglet
 from pyglet.gl import *
 
@@ -26,20 +27,22 @@ class PDBRenderer:
         self.residue_type = {}
 
         # Create vertex data for OpenGL
-        point_coordinates = []
-        for atom in self.protein.atoms:
-            point_coordinates.extend(atom.bio_atom.get_coord())
+        point_coordinates = np.zeros(len(self.protein.atoms) * 3)
+        for i, atom in enumerate(self.protein.atoms):
+            point_coordinates[i * 3] = atom.bio_atom.get_coord()[0]
+            point_coordinates[i * 3 + 1] = atom.bio_atom.get_coord()[1]
+            point_coordinates[i * 3 + 2] = atom.bio_atom.get_coord()[2]
 
         self.atom_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
             ('v3f', point_coordinates),
-            ('c3B', [0] * len(self.protein.atoms) * 3))
+            ('c3B', np.zeros(len(self.protein.atoms) * 3, dtype=np.byte)))
         self.update_colors()
 
         self.outline_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
             ('v3f', point_coordinates),
-            ('c3B', [32] * len(self.protein.atoms) * 3))
+            ('c3B', np.full(len(self.protein.atoms) * 3, 32, dtype=np.byte)))
 
     def color_atom(self, atom):
         """
