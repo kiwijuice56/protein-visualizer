@@ -30,10 +30,10 @@ class Camera3D(object):
         self.pivot_pos = self.pivot_pos + self.local_up_dir * distance
 
     def update(self):
-        self.move_horizontal(self.input_handler.dx_left * self.movement_speed * self.mouse_sensitivity * self.camera_pos[0])
+        self.move_horizontal(self.input_handler.dx_left * self.movement_speed * self.mouse_sensitivity * max(1.0, self.camera_pos[0]))
         self.input_handler.dx_left = 0
 
-        self.move_vertical(-self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * self.camera_pos[0])
+        self.move_vertical(-self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * max(1.0, self.camera_pos[0]))
         self.input_handler.dy_left = 0
 
         self.camera_pos[1] -= self.input_handler.dx_middle * self.mouse_sensitivity
