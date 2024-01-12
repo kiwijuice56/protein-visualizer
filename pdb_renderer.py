@@ -80,7 +80,7 @@ class Camera3D(object):
 class PDBRenderer:
     POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees
-    Z_NEAR = 1.0
+    Z_NEAR = 2
     Z_FAR = 512
 
     def __init__(self, protein, window, bounding_box=None, point_size=8, outline=True):

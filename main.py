@@ -8,8 +8,6 @@ from pyglet.gl import *
 
 import math
 
-import colour
-
 
 # Initialize window
 window = pyglet.window.Window(resizable=True)
@@ -19,11 +17,6 @@ window.set_exclusive_mouse(False)
 protein = Protein("proteins/alphafold_generation.pdb",
                   "proteins/alphafold_generation_sequence.fa",
                   "proteins/alphafold_generation_embeddings.h5")
-
-initial_color = colour.Color(hue=0, saturation=0.8, luminance=0.5)
-for i, residue in enumerate(protein.residues):
-    initial_color.hue = (i / len(protein.residues)) * 0.8
-    residue.color = [int(b * 255) for b in initial_color.rgb]
 
 # Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
@@ -40,16 +33,17 @@ def on_key_press(symbol, modifiers):
         highlight_index -= 1
     if symbol == key.RIGHT:
         highlight_index += 1
+
     if highlight_index < 0:
         highlight_index = len(protein.residues) + highlight_index
     elif highlight_index >= len(protein.residues):
         highlight_index -= len(protein.residues)
 
-    new_color = colour.Color(hue=(float(old_index) / len(protein.residues)) * 0.8, saturation=0.8, luminance=0.5)
-    protein.residues[old_index].color = [int(b * 255) for b in new_color.rgb]
+    protein.residues[old_index].highlighted = False
+    protein.color_residue(protein.residues[old_index])
 
-    new_color = colour.Color(hue=(float(highlight_index) / len(protein.residues)) * 0.8, saturation=0.8, luminance=0.5)
-    protein.residues[highlight_index].color = [min(255, int(b * 255) + 128) for b in new_color.rgb]
+    protein.residues[highlight_index].highlighted = True
+    protein.color_residue(protein.residues[highlight_index])
 
     if old_index != highlight_index:
         pdb_renderer.update_colors(protein.residues[old_index].atoms[0].index,
@@ -64,6 +58,24 @@ def on_key_press(symbol, modifiers):
         pdb_renderer.set_point_size(pdb_renderer.point_size + 1)
     if symbol == key.DOWN:
         pdb_renderer.set_point_size(pdb_renderer.point_size - 1)
+
+    if symbol == key._1:
+        protein.update_colors(protein.CLUSTER_INDEX)
+        pdb_renderer.update_colors()
+        pdb_renderer.update_colors()
+    if symbol == key._2:
+        protein.update_colors(protein.RESIDUE_INDEX)
+        pdb_renderer.update_colors()
+        pdb_renderer.update_colors()
+
+    if symbol == key._8:
+        protein.update_colors(new_color_palette=protein.RAINBOW)
+        pdb_renderer.update_colors()
+        pdb_renderer.update_colors()
+    if symbol == key._9:
+        protein.update_colors(new_color_palette=protein.POISSON)
+        pdb_renderer.update_colors()
+        pdb_renderer.update_colors()
 
     if symbol == key.O:
         pdb_renderer.outline = not pdb_renderer.outline
