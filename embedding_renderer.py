@@ -33,9 +33,9 @@ class Camera2D(object):
 
 
 class EmbeddingRenderer:
-    POINT_SIZE_RANGE = (1, 10)
+    POINT_SIZE_RANGE = (1, 16)
     POINT_OPACITY = 200
-    BACKGROUND_OPACITY = 200
+    BACKGROUND_OPACITY = 225
 
     def __init__(self, protein, window, bounding_box=None, point_size=8):
         """

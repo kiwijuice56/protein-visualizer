@@ -16,5 +16,6 @@ Work in progress.
 - `pyglet 1.5.28` as an OpenGL interface
 - `bio 1.6.2` to parse PDB files
 - `scikit-learn 1.3.2` for the t-SNE algorithm
-- `h5py` to parse h5 database files
-- `colour` for convenient color arithmetic
+- `h5py 3.10.0` to parse h5 database files
+- `numpy 1.26.2`
+- `colour 0.1.5` for convenient color arithmetic

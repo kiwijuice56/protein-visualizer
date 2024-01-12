@@ -6,7 +6,7 @@ from pyglet.gl import *
 
 
 class Camera3D(object):
-    ZOOM_RANGE = (0.01, 128)
+    ZOOM_RANGE = (0.01, 256)
     VERTICAL_ROTATION_LIMIT = 0.1
 
     def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.01, scroll_sensitivity=0.1):
@@ -21,7 +21,7 @@ class Camera3D(object):
 
         self.forward_dir = np.array([0, 0, 1])
         self.right_dir = np.array([0, 0, 0])
-        self.global_up_dir = np.array([0, -1, 0])
+        self.global_up_dir = np.array([0, 1, 0])
         self.local_up_dir = np.array([0, -1, 0])
         self.scroll_sensitivity = scroll_sensitivity
 
@@ -45,10 +45,10 @@ class Camera3D(object):
         self.move_vertical(-self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * max(1.0, self.camera_pos[0]))
         self.input_handler.dy_left = 0
 
-        self.camera_pos[1] -= self.input_handler.dx_middle * self.mouse_sensitivity
+        self.camera_pos[1] += self.input_handler.dx_middle * self.mouse_sensitivity
         self.input_handler.dx_middle = 0
 
-        self.camera_pos[2] += self.input_handler.dy_middle * self.mouse_sensitivity
+        self.camera_pos[2] -= self.input_handler.dy_middle * self.mouse_sensitivity
 
         # Prevent the camera from flipping over
         self.camera_pos[2] = max(self.VERTICAL_ROTATION_LIMIT, min(np.pi - self.VERTICAL_ROTATION_LIMIT, self.camera_pos[2]))
@@ -78,9 +78,9 @@ class Camera3D(object):
 
 
 class PDBRenderer:
-    POINT_SIZE_RANGE = (1, 10)
+    POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees
-    Z_NEAR = 0.5
+    Z_NEAR = 1.0
     Z_FAR = 512
 
     def __init__(self, protein, window, bounding_box=None, point_size=8, outline=True):

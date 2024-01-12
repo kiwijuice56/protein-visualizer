@@ -81,7 +81,7 @@ def on_draw():
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.6) - 16, 16, int(window.width * 0.4), int(window.width * 0.4)])
+    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 16, 16, int(window.width * 0.3), int(window.width * 0.3)])
     embedding_renderer.draw()
 
     # Reset projection to 2D for UI
@@ -92,12 +92,10 @@ def on_draw():
 
     document = pyglet.text.document.FormattedDocument()
 
-    # Draw the title label
-    document.insert_text(0, "example protein\n",
-                         {"font_name": "Consolas",
-                          "font_size": 16,
-                          "background_color": (0, 0, 0, 180),
-                          "color": (255, 255, 255, 255)})
+    text_style = {"font_name": "Consolas",
+                  "font_size": 16,
+                  "background_color": (0, 0, 0, 180),
+                  "color": (255, 255, 255, 255)}
 
     # Draw the adjacent residue label
     for i in range(-2, 4):
@@ -109,7 +107,8 @@ def on_draw():
         digit_length = int(math.log10(len(protein.residues))) + 1
         snippet = f"{f'%0{digit_length}d' % adj}:{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
         color = tuple((255, 230, 0, 255) if i == 0 else [200 - abs(i) * 24] * 3 + [255])
-        document.insert_text(len(document.text), snippet, {"color": color})
+        text_style["color"] = color
+        document.insert_text(len(document.text), snippet, text_style)
 
     layout = pyglet.text.layout.TextLayout(document, multiline=True, width=window.width, height=window.height)
     layout.anchor_x = "left"
