@@ -6,7 +6,7 @@ from pyglet.gl import *
 
 
 class Camera3D(object):
-    def __init__(self, window, movement_speed=0.08, mouse_sensitivity=0.01):
+    def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.01, scroll_sensitivity=0.1):
         self.pivot_pos = np.array([0, 0, -32])
         self.camera_pos = np.array([12, 0, np.pi/2])
 
@@ -14,6 +14,7 @@ class Camera3D(object):
         self.right_dir = np.array([0, 0, 0])
         self.global_up_dir = np.array([0, -1, 0])
         self.local_up_dir = np.array([0, -1, 0])
+        self.scroll_sensitivity = scroll_sensitivity
 
         self.input_handler = InputHandler()
 
@@ -29,10 +30,10 @@ class Camera3D(object):
         self.pivot_pos = self.pivot_pos + self.local_up_dir * distance
 
     def update(self):
-        self.move_horizontal(self.input_handler.dx_left * self.movement_speed)
+        self.move_horizontal(self.input_handler.dx_left * self.movement_speed * self.mouse_sensitivity * self.camera_pos[0])
         self.input_handler.dx_left = 0
 
-        self.move_vertical(-self.input_handler.dy_left * self.movement_speed)
+        self.move_vertical(-self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * self.camera_pos[0])
         self.input_handler.dy_left = 0
 
         self.camera_pos[1] -= self.input_handler.dx_middle * self.mouse_sensitivity
@@ -46,7 +47,7 @@ class Camera3D(object):
         self.input_handler.dy_middle = 0
 
         min_zoom = 0.05
-        self.camera_pos[0] -= self.input_handler.scroll_y
+        self.camera_pos[0] -= self.input_handler.scroll_y * self.scroll_sensitivity * self.camera_pos[0]
         self.camera_pos[0] = max(min_zoom, self.camera_pos[0])
         self.input_handler.scroll_y = 0
 

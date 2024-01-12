@@ -6,8 +6,9 @@ from input_handler import InputHandler
 
 
 class Camera2D(object):
-    def __init__(self, window, movement_speed=0.5, mouse_sensitivity=0.01):
+    def __init__(self, window, movement_speed=0.003, mouse_sensitivity=1.0, scroll_sensitivity=0.07):
         self.pos = np.zeros(2)
+        self.scale = 1
 
         self.input_handler = InputHandler()
 
@@ -15,17 +16,23 @@ class Camera2D(object):
 
         self.movement_speed = movement_speed
         self.mouse_sensitivity = mouse_sensitivity
+        self.scroll_sensitivity = scroll_sensitivity
 
     def update(self):
-        self.pos[0] += self.input_handler.dx_left * self.movement_speed
+        self.pos[0] -= self.input_handler.dx_left * self.movement_speed * self.mouse_sensitivity * self.scale
         self.input_handler.dx_left = 0
 
-        self.pos[1] += self.input_handler.dy_left * self.movement_speed
+        self.pos[1] -= self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * self.scale
         self.input_handler.dy_left = 0
+
+        max_zoom, min_zoom = 8, 0.01
+        self.scale -= self.scroll_sensitivity * self.scale * self.input_handler.scroll_y
+        self.scale = max(min_zoom, min(max_zoom, self.scale))
+        self.input_handler.scroll_y = 0
 
 
 class EmbeddingRenderer:
-    def __init__(self, protein, window, bounding_box=None, point_size=6):
+    def __init__(self, protein, window, bounding_box=None, point_size=8):
         """
         @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window
@@ -64,6 +71,7 @@ class EmbeddingRenderer:
 
         # Define the pyglet vertex list
         self.vertices = None
+        self.outline_vertices = None
 
         # Default to full-screen render
         self.bounding_box = []
@@ -82,16 +90,30 @@ class EmbeddingRenderer:
         self.bounding_box = bounding_box
         self.camera.input_handler.bounding_box = bounding_box
 
+        box = [0, 0, 1, 1]
+
+        box[0] += self.camera.pos[0]
+        box[1] += self.camera.pos[1]
+
+        box[0] += 0.5 - self.camera.scale / 2
+        box[1] += 0.5 - self.camera.scale / 2
+
+        box[2] *= self.camera.scale
+        box[3] *= self.camera.scale
+
         for i in range(0, len(self.norm_points), 2):
             x = self.norm_points[i]
             y = self.norm_points[i + 1]
 
-            self.scaled_points[i] = self.camera.pos[0] + x * self.bounding_box[2] + self.bounding_box[0]
-            self.scaled_points[i + 1] = self.camera.pos[1] + y * self.bounding_box[2] + self.bounding_box[1]
+            u = (x - box[0]) / box[2]
+            v = (y - box[1]) / box[3]
+
+            self.scaled_points[i] = u * self.bounding_box[2] + self.bounding_box[0]
+            self.scaled_points[i + 1] = v * self.bounding_box[2] + self.bounding_box[1]
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),
-            ('c3B', [0] * (len(self.protein.embedding_points) // 2 * 3)))
+            ('c4B', np.zeros(len(self.protein.embedding_points) // 2 * 4, dtype=np.byte)))
         self.update_colors()
 
     def color_residue(self, residue):
@@ -111,14 +133,14 @@ class EmbeddingRenderer:
         if end == -1:
             end = len(self.protein.residues)
         for i in range(start, end):
-            self.vertices.colors[i * 3: i * 3 + 3] = self.color_residue(self.protein.residues[i])
+            self.vertices.colors[i * 4: i * 4 + 3] = self.color_residue(self.protein.residues[i])
+            self.vertices.colors[i * 4 + 3] = 200
 
     def draw(self):
         glEnable(GL_SCISSOR_TEST)
         glEnable(GL_POINT_SMOOTH)
 
         glScissor(*self.bounding_box)
-        glPointSize(self.point_size)
 
         glLoadIdentity()
         glDisable(GL_DEPTH_TEST)
@@ -128,6 +150,8 @@ class EmbeddingRenderer:
         background = pyglet.shapes.Rectangle(*self.bounding_box, color=(255, 255, 255))
         background.opacity = 210
         background.draw()
+
+        glPointSize(self.point_size)
         self.vertices.draw(pyglet.gl.GL_POINTS)
 
         # Clean up
