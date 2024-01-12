@@ -28,15 +28,20 @@ class Residue:
 class Protein:
     RESIDUE_INDEX = 1
     CLUSTER_INDEX = 2
+    ATOM_TYPE = 3
 
     RAINBOW = 8
     POISSON = 9
 
     poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
-                      (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
-                      (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
-                      (167, 103, 114), (204, 134, 125), (224, 186, 139), (195, 130, 82), (161, 86, 60),
-                      (111, 52, 45), (68, 39, 31)]
+                       (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
+                       (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
+                       (167, 103, 114), (204, 134, 125), (224, 186, 139), (195, 130, 82), (161, 86, 60),
+                       (111, 52, 45), (68, 39, 31)]
+
+    cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
+                  "P": (235, 145, 56),
+                  "_": (255, 255, 255)}
 
     def __init__(self, structure_path, sequence_path, embedding_path,
                  color_mode=CLUSTER_INDEX, color_palette=RAINBOW, cluster_max_distance=6.0):
@@ -100,6 +105,10 @@ class Protein:
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
+            case self.ATOM_TYPE:
+                residue.color = self.get_color(self.cluster_index[residue.index] / self.cluster_count, residue.highlighted)
+                for atom in residue.atoms:
+                    atom.color = self.cpk_colors[atom.bio_atom.get_id()[0]]
 
     def get_color(self, x, highlight=False):
         def to_rgb(c):

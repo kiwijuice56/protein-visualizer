@@ -125,14 +125,6 @@ class PDBRenderer:
 
         self.camera = Camera3D(window)
 
-    def color_atom(self, atom):
-        """
-        Returns the color of a particular atom depending on the renderer settings
-        @param atom: The Atom to color
-        @return: A length-3 RGB array, [0, 255]
-        """
-        return atom.residue.color
-
     def update_colors(self, start=0, end=-1):
         """
         Updates the rendered colors within the given range
@@ -142,7 +134,7 @@ class PDBRenderer:
         if end == -1:
             end = len(self.protein.atoms)
         for i in range(start, end):
-            self.atom_vertices.colors[i * 3: i * 3 + 3] = self.color_atom(self.protein.atoms[i])
+            self.atom_vertices.colors[i * 3: i * 3 + 3] = self.protein.atoms[i].color
 
     def set_point_size(self, new_size):
         self.point_size = max(self.POINT_SIZE_RANGE[0], min(self.POINT_SIZE_RANGE[1], new_size))

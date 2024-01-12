@@ -67,6 +67,10 @@ def on_key_press(symbol, modifiers):
         protein.update_colors(protein.RESIDUE_INDEX)
         pdb_renderer.update_colors()
         pdb_renderer.update_colors()
+    if symbol == key._3:
+        protein.update_colors(protein.ATOM_TYPE)
+        pdb_renderer.update_colors()
+        pdb_renderer.update_colors()
 
     if symbol == key._8:
         protein.update_colors(new_color_palette=protein.RAINBOW)

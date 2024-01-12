@@ -124,14 +124,6 @@ class EmbeddingRenderer:
             ('c4B', np.zeros(len(self.protein.embedding_points) // 2 * 4, dtype=np.byte)))
         self.update_colors()
 
-    def color_residue(self, residue):
-        """
-        Returns the color of a particular residue depending on the renderer settings
-        @param residue: The Residue to color
-        @return: A length-3 RGB array, [0, 255]
-        """
-        return residue.color
-
     def update_colors(self, start=0, end=-1):
         """
         Updates the rendered colors within the given range
@@ -141,7 +133,7 @@ class EmbeddingRenderer:
         if end == -1:
             end = len(self.protein.residues)
         for i in range(start, end):
-            self.vertices.colors[i * 4: i * 4 + 3] = self.color_residue(self.protein.residues[i])
+            self.vertices.colors[i * 4: i * 4 + 3] = self.protein.residues[i].color
             self.vertices.colors[i * 4 + 3] = self.POINT_OPACITY
 
     def draw(self):
