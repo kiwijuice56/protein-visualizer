@@ -6,6 +6,8 @@ from input_handler import InputHandler
 
 
 class Camera2D(object):
+    ZOOM_RANGE = (0.01, 8)
+
     def __init__(self, window, movement_speed=0.003, mouse_sensitivity=1.0, scroll_sensitivity=0.07):
         self.pos = np.zeros(2)
         self.scale = 1
@@ -25,13 +27,16 @@ class Camera2D(object):
         self.pos[1] -= self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * self.scale
         self.input_handler.dy_left = 0
 
-        max_zoom, min_zoom = 8, 0.01
         self.scale -= self.scroll_sensitivity * self.scale * self.input_handler.scroll_y
-        self.scale = max(min_zoom, min(max_zoom, self.scale))
+        self.scale = max(self.ZOOM_RANGE[0], min(self.ZOOM_RANGE[1], self.scale))
         self.input_handler.scroll_y = 0
 
 
 class EmbeddingRenderer:
+    POINT_SIZE_RANGE = (1, 10)
+    POINT_OPACITY = 200
+    BACKGROUND_OPACITY = 200
+
     def __init__(self, protein, window, bounding_box=None, point_size=8):
         """
         @param protein: Reference to Protein object to render
@@ -43,12 +48,11 @@ class EmbeddingRenderer:
         self.window = window
         self.camera = Camera2D(window)
 
-        # Find the region the points lie in, with extra padding to prevent points from clipping against the screen
-        padding_amount = 4
+        # Find the region the points lie in
         min_point = [min(self.protein.embedding_points[0::2]),
                      min(self.protein.embedding_points[1::2])]
-        max_point = [max(self.protein.embedding_points[0::2]) + padding_amount,
-                     max(self.protein.embedding_points[1::2]) + padding_amount]
+        max_point = [max(self.protein.embedding_points[0::2]),
+                     max(self.protein.embedding_points[1::2])]
 
         # Define a 2D space where the data is contained
         self.data_bounding_box = [min_point[0], min_point[1], max_point[0], max_point[1]]
@@ -80,7 +84,11 @@ class EmbeddingRenderer:
         else:
             self.set_bounding_box(bounding_box)
 
-        self.point_size = point_size
+        self.point_size = 0
+        self.set_point_size(point_size)
+
+    def set_point_size(self, new_size):
+        self.point_size = max(self.POINT_SIZE_RANGE[0], min(self.POINT_SIZE_RANGE[1], new_size))
 
     def set_bounding_box(self, bounding_box):
         """
@@ -90,23 +98,23 @@ class EmbeddingRenderer:
         self.bounding_box = bounding_box
         self.camera.input_handler.bounding_box = bounding_box
 
-        box = [0, 0, 1, 1]
+        world_box = [0, 0, 1, 1]
 
-        box[0] += self.camera.pos[0]
-        box[1] += self.camera.pos[1]
+        world_box[0] += self.camera.pos[0]
+        world_box[1] += self.camera.pos[1]
 
-        box[0] += 0.5 - self.camera.scale / 2
-        box[1] += 0.5 - self.camera.scale / 2
+        world_box[0] += 0.5 - self.camera.scale / 2
+        world_box[1] += 0.5 - self.camera.scale / 2
 
-        box[2] *= self.camera.scale
-        box[3] *= self.camera.scale
+        world_box[2] *= self.camera.scale
+        world_box[3] *= self.camera.scale
 
         for i in range(0, len(self.norm_points), 2):
             x = self.norm_points[i]
             y = self.norm_points[i + 1]
 
-            u = (x - box[0]) / box[2]
-            v = (y - box[1]) / box[3]
+            u = (x - world_box[0]) / world_box[2]
+            v = (y - world_box[1]) / world_box[3]
 
             self.scaled_points[i] = u * self.bounding_box[2] + self.bounding_box[0]
             self.scaled_points[i + 1] = v * self.bounding_box[2] + self.bounding_box[1]
@@ -134,7 +142,7 @@ class EmbeddingRenderer:
             end = len(self.protein.residues)
         for i in range(start, end):
             self.vertices.colors[i * 4: i * 4 + 3] = self.color_residue(self.protein.residues[i])
-            self.vertices.colors[i * 4 + 3] = 200
+            self.vertices.colors[i * 4 + 3] = self.POINT_OPACITY
 
     def draw(self):
         glEnable(GL_SCISSOR_TEST)
@@ -148,7 +156,7 @@ class EmbeddingRenderer:
         glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
 
         background = pyglet.shapes.Rectangle(*self.bounding_box, color=(255, 255, 255))
-        background.opacity = 210
+        background.opacity = self.BACKGROUND_OPACITY
         background.draw()
 
         glPointSize(self.point_size)

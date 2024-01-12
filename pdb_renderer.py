@@ -6,7 +6,16 @@ from pyglet.gl import *
 
 
 class Camera3D(object):
+    ZOOM_RANGE = (0.01, 128)
+    VERTICAL_ROTATION_LIMIT = 0.1
+
     def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.01, scroll_sensitivity=0.1):
+        """
+        @param window: Reference to the parent pyglet.window.Window
+        @param movement_speed: Translation speed
+        @param mouse_sensitivity: Dampening amount to any mouse cursor movement
+        @param scroll_sensitivity: Dampening amount to mouse scrolling
+        """
         self.pivot_pos = np.array([0, 0, -32])
         self.camera_pos = np.array([12, 0, np.pi/2])
 
@@ -42,13 +51,11 @@ class Camera3D(object):
         self.camera_pos[2] += self.input_handler.dy_middle * self.mouse_sensitivity
 
         # Prevent the camera from flipping over
-        epsilon = 0.1
-        self.camera_pos[2] = max(epsilon, min(np.pi - epsilon, self.camera_pos[2]))
+        self.camera_pos[2] = max(self.VERTICAL_ROTATION_LIMIT, min(np.pi - self.VERTICAL_ROTATION_LIMIT, self.camera_pos[2]))
         self.input_handler.dy_middle = 0
 
-        min_zoom = 0.05
         self.camera_pos[0] -= self.input_handler.scroll_y * self.scroll_sensitivity * self.camera_pos[0]
-        self.camera_pos[0] = max(min_zoom, self.camera_pos[0])
+        self.camera_pos[0] = max(self.ZOOM_RANGE[0], min(self.ZOOM_RANGE[1], self.camera_pos[0]))
         self.input_handler.scroll_y = 0
 
     def draw(self):
@@ -71,6 +78,11 @@ class Camera3D(object):
 
 
 class PDBRenderer:
+    POINT_SIZE_RANGE = (1, 10)
+    FOV = 65  # Degrees
+    Z_NEAR = 0.5
+    Z_FAR = 512
+
     def __init__(self, protein, window, bounding_box=None, point_size=8, outline=True):
         """
         @param protein: Reference to Protein object to render
@@ -133,11 +145,7 @@ class PDBRenderer:
             self.atom_vertices.colors[i * 3: i * 3 + 3] = self.color_atom(self.protein.atoms[i])
 
     def set_point_size(self, new_size):
-        if new_size <= 0:
-            new_size = 1
-        if new_size > 10:
-            new_size = 10
-        self.point_size = new_size
+        self.point_size = max(self.POINT_SIZE_RANGE[0], min(self.POINT_SIZE_RANGE[1], new_size))
 
     def set_bounding_box(self, bounding_box):
         """
@@ -154,7 +162,7 @@ class PDBRenderer:
 
         glLoadIdentity()
         glMatrixMode(GL_PROJECTION)
-        gluPerspective(65, self.window.width / float(self.window.height), 0.8, 512)
+        gluPerspective(self.FOV, self.window.width / float(self.window.height), self.Z_NEAR, self.Z_FAR)
 
         self.camera.draw()
 

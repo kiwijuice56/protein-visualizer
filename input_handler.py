@@ -7,6 +7,7 @@ class InputHandler(object):
         self.dy_left = 0
         self.dx_middle = 0
         self.dy_middle = 0
+        self.scroll_x = 0
         self.scroll_y = 0
         self.gesture_pos = [0, 0]
         self.bounding_box = [0, 0, 0, 0]
@@ -19,6 +20,7 @@ class InputHandler(object):
             return
         if y < self.bounding_box[1] or y - self.bounding_box[1] > self.bounding_box[3]:
             return
+        self.scroll_x = scroll_x
         self.scroll_y = scroll_y
         return pyglet.event.EVENT_HANDLED
 
