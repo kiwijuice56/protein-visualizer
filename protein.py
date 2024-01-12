@@ -43,7 +43,7 @@ class Protein:
                   "P": (235, 145, 56),
                   "_": (255, 255, 255)}
 
-    def __init__(self, structure_path, sequence_path, embedding_path,
+    def __init__(self, structure_path, embedding_path,
                  color_mode=CLUSTER_INDEX, color_palette=RAINBOW, cluster_max_distance=6.0):
         self.color_mode = color_mode
         self.color_palette = color_palette
@@ -65,12 +65,7 @@ class Protein:
             self.atoms.extend(residue_atoms)
 
         embedding_file = h5py.File(embedding_path, 'r')
-        sequence_file = open(sequence_path, 'r')
-
-        title = sequence_file.readline()[1:].strip()
-        self.sequence = sequence_file.readline().strip()
-
-        embeddings = embedding_file[title][()]
+        embeddings = embedding_file[list(embedding_file.keys())[0]][()]
 
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
         transform = TSNE(n_components=2, learning_rate='auto', init='random', perplexity=3).fit_transform(embeddings)

@@ -15,7 +15,6 @@ window.set_exclusive_mouse(False)
 
 # Initialize protein
 protein = Protein("proteins/alphafold_generation.pdb",
-                  "proteins/alphafold_generation_sequence.fa",
                   "proteins/alphafold_generation_embeddings.h5")
 
 # Initialize rendering windows
