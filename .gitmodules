@@ -1,0 +1,3 @@
+[submodule "prose"]
+	path = prose
+	url = https://github.com/tbepler/prose
