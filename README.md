@@ -1,5 +1,5 @@
 # protein-visualizer
-A protein visualization program that uses deep learning to 3D structure to amino acid function.
+A protein visualization program that uses deep learning to map 3D structure to amino acid function.
 
 ![Protein rendered using this program](images/picture_demonstration.png)
 
