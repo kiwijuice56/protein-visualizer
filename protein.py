@@ -1,5 +1,12 @@
+import os
+import subprocess
+import warnings
+
 import Bio.PDB
 import Bio.SeqRecord
+import numpy as np
+from Bio import SeqIO
+
 import colour
 
 import h5py
@@ -13,14 +20,16 @@ class Atom:
         self.bio_atom = bio_atom
         self.residue = residue
         self.index = index
+        self.color = [0, 0, 0]
 
 
 # Wrapper class for collections of atoms
 class Residue:
-    def __init__(self, atoms, bio_residue, index):
+    def __init__(self, atoms, bio_residue, index, seq_index):
         self.atoms = atoms
         self.bio_residue = bio_residue
         self.index = index
+        self.seq_index = seq_index
         self.color = [0, 0, 0]
         self.highlighted = False
 
@@ -43,37 +52,95 @@ class Protein:
                   "P": (235, 145, 56),
                   "_": (255, 255, 255)}
 
-    def __init__(self, structure_path, embedding_path,
-                 color_mode=CLUSTER_INDEX, color_palette=RAINBOW, cluster_max_distance=6.0):
+    def __init__(self, pdb_path, chain_id=None, color_mode=CLUSTER_INDEX, color_palette=RAINBOW,
+                 cluster_max_distance=6.0):
         self.color_mode = color_mode
         self.color_palette = color_palette
 
-        parser = Bio.PDB.PDBParser(QUIET=True)
-        bio_structure = parser.get_structure("id", structure_path)
+        # Get the full 3D structure from the PDB file
+        warnings.filterwarnings("ignore", "'HEADER' line not found; can't determine PDB ID.")
+        bio_structure = Bio.PDB.PDBParser(QUIET=True).get_structure("struct", pdb_path)
+
+        # Choose default chain if none specified
+        chains = [c for c in bio_structure.get_chains()]
+        if chain_id is None:
+            chain_id = chains[0].get_id()
+
+        # Retrieve the requested chain from the PDB file
+        chain = None
+        for other_chain in chains:
+            if other_chain.get_id() == chain_id:
+                chain = other_chain
+                break
+
+        if chain is None:
+            raise Exception(
+                f"Chain with ID '{chain_id}' could not be found within .pdb file."
+                f"Available chains: {[chain.get_id() for chain in chains]}.")
+
+        # There are two methods of attaining an amino acid sequence from a PDB file: `atom` and `seqres`
+        # `atom` calculates the sequence from the available residues found in the 3D space
+        # `seqres` retrieves the sequence from the PDB file metadata
+
+        # We will use the full, accurate sequence from the `seqres` record in order to calculate embeddings,
+        # but we also need the `atom` sequence in order to match the 3D data with those same embeddings
+        physical_record, full_record = None, None
+        for other_record in [r for r in SeqIO.parse(pdb_path, "pdb-atom")]:
+            if other_record.annotations["chain"] == chain_id:
+                physical_record = other_record
+        for other_record in [r for r in SeqIO.parse(pdb_path, "pdb-seqres")]:
+            if other_record.annotations["chain"] == chain_id:
+                full_record = other_record
+        if full_record is None:
+            warnings.warn("Could not read SEQRES information; Continuing with sequence as determined from the 3D "
+                          "structure.", stacklevel=2)
+            full_record = physical_record
+
+        prot_name = "".join(x for x in full_record.name if x.isalnum())
+
+        # ProSE accepts sequences as .fa files only
+        SeqIO.write(full_record, f"data/{prot_name}_{chain_id}.fa", "fasta")
+
+        # Parse the PDB structure data
         self.residues = []
         self.atoms = []
-
-        # Initialize data from PDB file
         atom_index = 0
-        for i, bio_residue in enumerate(bio_structure.get_residues()):
+        for i, bio_residue in enumerate(chain.get_residues()):
+            seq_index = bio_residue.get_id()[1]
+            # Remove any residues not in range (often, these are water molecules)
+            if seq_index < physical_record.annotations["start"]:
+                continue
+            if seq_index >= physical_record.annotations["end"]:
+                continue
             residue_atoms = []
-            residue = Residue(residue_atoms, bio_residue, i)
+            residue = Residue(residue_atoms, bio_residue, i, seq_index)
             for bio_atom in bio_residue.get_atoms():
                 residue_atoms.append(Atom(bio_atom, residue, atom_index))
                 atom_index += 1
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
 
-        embedding_file = h5py.File(embedding_path, 'r')
+        # Calculate embeddings with ProSE
+        if not os.path.isfile(f"data/{prot_name}_{chain_id}_embeddings.h5"):
+            print("Embeddings not found in `data` directory. Generating new embeddings.")
+            subprocess.call(["python", "prose/embed_sequences.py", '-o', f"data/{prot_name}_{chain_id}_embeddings.h5",
+                             f"data/{prot_name}_{chain_id}.fa"], shell=True)
+        else:
+            print("Embeddings from previous session found in `data` directory.")
+
+        # Parse the embeddings file for the residues we will render
+        embedding_file = h5py.File(f"data/{prot_name}_{chain_id}_embeddings.h5", 'r')
         embeddings = embedding_file[list(embedding_file.keys())[0]][()]
+        realized_embeddings = []
+        for residue in self.residues:
+            realized_embeddings.append(embeddings[residue.seq_index])
 
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
-        transform = TSNE(n_components=2, learning_rate='auto', init='random', perplexity=3).fit_transform(embeddings)
+        transform = TSNE(n_components=2, perplexity=3).fit_transform(np.array(realized_embeddings))
         self.embedding_points = transform.flatten()
 
         # Calculate residue clusters
         db = DBSCAN(eps=cluster_max_distance).fit(transform)
-
         self.cluster_index = db.labels_
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
 
@@ -97,11 +164,13 @@ class Protein:
                 residue.color = color
             case self.CLUSTER_INDEX:
                 color = self.get_color(self.cluster_index[residue.index] / self.cluster_count, residue.highlighted)
+
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
             case self.ATOM_TYPE:
-                residue.color = self.get_color(self.cluster_index[residue.index] / self.cluster_count, residue.highlighted)
+                residue.color = self.get_color(self.cluster_index[residue.index] / self.cluster_count,
+                                               residue.highlighted)
                 for atom in residue.atoms:
                     atom.color = self.cpk_colors[atom.bio_atom.get_id()[0]]
 

@@ -14,8 +14,7 @@ window = pyglet.window.Window(resizable=True)
 window.set_exclusive_mouse(False)
 
 # Initialize protein
-protein = Protein("proteins/alphafold_generation.pdb",
-                  "proteins/alphafold_generation_embeddings.h5")
+protein = Protein("data/alphafold_generation.pdb")
 
 # Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
@@ -120,7 +119,7 @@ def on_draw():
         if adj >= len(protein.residues):
             adj -= len(protein.residues)
         digit_length = int(math.log10(len(protein.residues))) + 1
-        snippet = f"{f'%0{digit_length}d' % adj}:{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
+        snippet = f"{f'%0{digit_length}d' % protein.residues[adj].bio_residue.get_id()[1]}:{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
         color = tuple((255, 230, 0, 255) if i == 0 else [200 - abs(i) * 24] * 3 + [255])
         text_style["color"] = color
         document.insert_text(len(document.text), snippet, text_style)
