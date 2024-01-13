@@ -1,3 +1,5 @@
+import sys
+
 from pdb_renderer import PDBRenderer
 from embedding_renderer import EmbeddingRenderer
 from protein import Protein
@@ -14,7 +16,7 @@ window = pyglet.window.Window(resizable=True)
 window.set_exclusive_mouse(False)
 
 # Initialize protein
-protein = Protein("data/alphafold_generation.pdb")
+protein = Protein(sys.argv[1])
 
 # Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
