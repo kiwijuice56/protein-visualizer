@@ -79,6 +79,9 @@ class Camera3D(object):
 
 # Renders the 3D structure of a protein
 class PDBRenderer:
+    GRID_LINE_COUNT = 16
+    BACKGROUND_COLOR = (98, 98, 98, 255)
+    GRID_LINE_COLOR = (255, 255, 255, 32)
     POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees
     Z_NEAR = 2
@@ -107,11 +110,12 @@ class PDBRenderer:
         self.residue_type = {}
 
         # Create vertex data for OpenGL
+        offset = protein.residues[0].atoms[0].bio_atom.get_coord()
         point_coordinates = np.zeros(len(self.protein.atoms) * 3)
         for i, atom in enumerate(self.protein.atoms):
-            point_coordinates[i * 3] = atom.bio_atom.get_coord()[0]
-            point_coordinates[i * 3 + 1] = atom.bio_atom.get_coord()[1]
-            point_coordinates[i * 3 + 2] = atom.bio_atom.get_coord()[2]
+            point_coordinates[i * 3] = atom.bio_atom.get_coord()[0] - offset[0]
+            point_coordinates[i * 3 + 1] = atom.bio_atom.get_coord()[1] - offset[1]
+            point_coordinates[i * 3 + 2] = atom.bio_atom.get_coord()[2] - offset[2]
 
         self.atom_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
@@ -125,6 +129,19 @@ class PDBRenderer:
             ('c3B', np.full(len(self.protein.atoms) * 3, 32, dtype=np.byte)))
 
         self.camera = Camera3D(window)
+
+        grid_points = []
+        for i in range(0, self.GRID_LINE_COUNT + 1):
+            size = 1.0 / self.GRID_LINE_COUNT
+
+            grid_points.extend([-128, -32, i * size * 256 - 128, 128, -32, i * size * 256 - 128])
+            grid_points.extend([i * size * 256 - 128, -32, -128, i * size * 256 - 128, -32, 128])
+
+        self.grid_list = pyglet.graphics.vertex_list(
+            len(grid_points) // 3,
+            ('v3f', grid_points),
+            ('c4B', self.GRID_LINE_COLOR * (len(grid_points) // 3))
+        )
 
     def update_colors(self, start=0, end=-1):
         """
@@ -159,12 +176,15 @@ class PDBRenderer:
 
         self.camera.draw()
 
-        glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClearColor(*[c / 255.0 for c in self.BACKGROUND_COLOR])
         glScissor(*self.bounding_box)
+
+        glEnable(GL_LINE_SMOOTH)
+        self.grid_list.draw(pyglet.gl.GL_LINES)
 
         if self.outline:
             glDisable(GL_DEPTH_TEST)
-            glPointSize(self.point_size * 2)
+            glPointSize(int(self.point_size * 1.5))
             self.outline_vertices.draw(pyglet.gl.GL_POINTS)
 
         glPointSize(self.point_size)
@@ -173,6 +193,7 @@ class PDBRenderer:
 
         # Clean up
         glDisable(GL_SCISSOR_TEST)
+        glDisable(GL_LINE_SMOOTH)
         glDisable(GL_POINT_SMOOTH)
         glDisable(GL_DEPTH_TEST)
 

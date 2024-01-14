@@ -13,10 +13,11 @@ import math
 
 # Initialize window
 window = pyglet.window.Window(resizable=True)
-window.set_exclusive_mouse(False)
+window.set_caption("protein-visualizer")
 
 # Initialize protein
-protein = Protein(sys.argv[1] if len(sys.argv) > 1 else "data/alphafold_generation.pdb")
+default_path = "data/alphafold_generation.pdb"
+protein = Protein(sys.argv[1] if len(sys.argv) > 1 else default_path)
 
 # Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
@@ -97,7 +98,7 @@ def on_draw():
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 16, 16, int(window.width * 0.3), int(window.width * 0.3)])
+    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3), int(window.width * 0.3)])
     embedding_renderer.draw()
 
     # Reset projection to 2D for UI
@@ -110,29 +111,46 @@ def on_draw():
 
     text_style = {"font_name": "Consolas",
                   "font_size": 16,
-                  "background_color": (0, 0, 0, 180),
-                  "color": (255, 255, 255, 255)}
+                  "background_color": (0, 0, 0, 140),
+                  "color": (255, 255, 255, 255),
+                  "wrap": False}
 
-    # Draw the adjacent residue label
-    for i in range(-2, 4):
+    # Rough estimate of how many amino acid labels can fit on screen
+    labels_fit = math.ceil(window.width / 32.0)
+
+    # Draw the residue label indices
+    for i in range(-2, labels_fit + 1):
         adj = highlight_index + i
         if adj < 0:
             adj = len(protein.residues) + adj
         if adj >= len(protein.residues):
             adj -= len(protein.residues)
         digit_length = int(math.log10(len(protein.residues))) + 1
-        snippet = f"{f'%0{digit_length}d' % protein.residues[adj].bio_residue.get_id()[1]}:{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
-        color = tuple((255, 230, 0, 255) if i == 0 else [200 - abs(i) * 24] * 3 + [255])
+        snippet = f"{'%-8d' % protein.residues[adj].seq_index}"
+        color = tuple((255, 230, 0, 255) if i == 0 else [255, 255, 255, 255])
         text_style["color"] = color
+        text_style["font_size"] = 8
+        document.insert_text(len(document.text), snippet, text_style)
+    document.insert_text(len(document.text), '\n')
+
+    # Draw the residue label names
+    for i in range(-2, labels_fit + 1):
+        adj = highlight_index + i
+        if adj < 0:
+            adj = len(protein.residues) + adj
+        if adj >= len(protein.residues):
+            adj -= len(protein.residues)
+        snippet = f"{'%3s' % protein.residues[adj].bio_residue.get_resname()} "
+        color = tuple((255, 230, 0, 255) if i == 0 else [255, 255, 255, 255])
+        text_style["color"] = color
+        text_style["font_size"] = 16
         document.insert_text(len(document.text), snippet, text_style)
 
-    layout = pyglet.text.layout.TextLayout(document, multiline=True, width=window.width, height=window.height)
+    layout = pyglet.text.layout.TextLayout(document, multiline=True, width=window.width)
     layout.anchor_x = "left"
-    layout.anchor_y = "top"
+    layout.anchor_y = "bottom"
 
-    # Padding
-    layout.x += 4
-    layout.y -= 4
+    layout.y = -window.height
 
     layout.draw()
 

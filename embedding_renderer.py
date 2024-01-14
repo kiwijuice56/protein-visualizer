@@ -36,9 +36,9 @@ class Camera2D(object):
 class EmbeddingRenderer:
     POINT_SIZE_RANGE = (1, 16)
     POINT_OPACITY = 200
-    BACKGROUND_OPACITY = 225
+    BACKGROUND_COLOR = (0, 0, 0, 140)
     GRID_LINE_COUNT = 32
-    GRID_LINE_COLOR = [32, 32, 32, 32]
+    GRID_LINE_COLOR = [255, 255, 255, 32]
 
     def __init__(self, protein, window, bounding_box=None, point_size=6):
         """
@@ -173,8 +173,8 @@ class EmbeddingRenderer:
         glEnable(GL_BLEND)
         glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
 
-        background = pyglet.shapes.Rectangle(*self.bounding_box, color=(255, 255, 255))
-        background.opacity = self.BACKGROUND_OPACITY
+        background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3])
+        background.opacity = self.BACKGROUND_COLOR[3]
         background.draw()
 
         self.grid_list.draw(pyglet.gl.GL_LINES)

@@ -153,6 +153,7 @@ class Protein:
         self.cluster_index = db.labels_
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
 
+        self.residues[0].highlighted = True
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
@@ -217,7 +218,7 @@ class Protein:
         if x >= 0:
             match self.color_palette:
                 case self.RAINBOW:
-                    color = colour.Color(hue=x * 0.8, saturation=0.65, luminance=0.5)
+                    color = colour.Color(hue=x * 0.8, saturation=0.75, luminance=0.5)
                 case self.POISSON:
                     color.rgb = get_color_from_palette(self.poisson_palette)
 
