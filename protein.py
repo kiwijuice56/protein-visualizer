@@ -34,11 +34,14 @@ class Residue:
         self.highlighted = False
 
 
+# Contains information about a protein, such as its 3D structure and node embeddings
 class Protein:
-    RESIDUE_INDEX = 1
-    CLUSTER_INDEX = 2
-    ATOM_TYPE = 3
+    # Color modes
+    RESIDUE_INDEX = 1  # Color residues by their index in the amino acid sequence
+    CLUSTER_INDEX = 2  # Color residues by their associated cluster in the embedding space
+    ATOM_TYPE = 3  # Color residues by their atoms using CPK coloring
 
+    # Color palettes (for color modes 1 and 2)
     RAINBOW = 8
     POISSON = 9
 
@@ -52,8 +55,14 @@ class Protein:
                   "P": (235, 145, 56),
                   "_": (255, 255, 255)}
 
-    def __init__(self, pdb_path, chain_id=None, color_mode=CLUSTER_INDEX, color_palette=RAINBOW,
-                 cluster_max_distance=6.0):
+    def __init__(self, pdb_path, chain_id=None, color_mode=CLUSTER_INDEX, color_palette=RAINBOW, cluster_distance=6.0):
+        """
+        @param pdb_path: Filepath to .pdb file containing the protein structure
+        @param chain_id: Which chain to load from the .pdb file. Defaults to first chain
+        @param color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE
+        @param color_palette: Options: Protein.RAINBOW, Protein.POISSON
+        @param cluster_distance: Maximum distance between nodes of a single cluster within the embedding space
+        """
         self.color_mode = color_mode
         self.color_palette = color_palette
 
@@ -140,13 +149,18 @@ class Protein:
         self.embedding_points = transform.flatten()
 
         # Calculate residue clusters
-        db = DBSCAN(eps=cluster_max_distance).fit(transform)
+        db = DBSCAN(eps=cluster_distance).fit(transform)
         self.cluster_index = db.labels_
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
 
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
+        """
+        Updates the color of the residues within this protein. Slow performance, do not call regularly
+        @param new_color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE
+        @param new_color_palette: Options: Protein.RAINBOW, Protein.POISSON
+        """
         if new_color_mode:
             self.color_mode = new_color_mode
         if new_color_palette:
@@ -155,6 +169,10 @@ class Protein:
             self.color_residue(residue)
 
     def color_residue(self, residue):
+        """
+        Colors the given residue (of this protein) using the color settings
+        @param residue: A residue of this protein.
+        """
         match self.color_mode:
             case self.RESIDUE_INDEX:
                 color = self.get_color(residue.index / len(self.residues), residue.highlighted)
@@ -173,8 +191,16 @@ class Protein:
                                                residue.highlighted)
                 for atom in residue.atoms:
                     atom.color = self.cpk_colors[atom.bio_atom.get_id()[0]]
+                    if residue.highlighted:
+                        atom.color = [min(255, c + 128) for c in atom.color]
 
     def get_color(self, x, highlight=False):
+        """
+        Internal function to retrieve a color from the current palette
+        @param x: [0, 1], different context depending on the current color mode
+        @param highlight: Whether this residue is currently highlighted
+        @return: An RGB array.
+        """
         def to_rgb(c):
             return [int(b * 255) for b in c.rgb]
 

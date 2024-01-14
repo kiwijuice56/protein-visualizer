@@ -77,6 +77,7 @@ class Camera3D(object):
         glTranslatef(*self.pivot_pos)
 
 
+# Renders the 3D structure of a protein
 class PDBRenderer:
     POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees

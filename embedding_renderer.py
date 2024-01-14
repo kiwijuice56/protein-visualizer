@@ -32,6 +32,7 @@ class Camera2D(object):
         self.input_handler.scroll_y = 0
 
 
+# Renders the 2D embeddings of a protein
 class EmbeddingRenderer:
     POINT_SIZE_RANGE = (1, 16)
     POINT_OPACITY = 200
