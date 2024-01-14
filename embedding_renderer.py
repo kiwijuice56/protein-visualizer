@@ -36,8 +36,10 @@ class EmbeddingRenderer:
     POINT_SIZE_RANGE = (1, 16)
     POINT_OPACITY = 200
     BACKGROUND_OPACITY = 225
+    GRID_LINE_COUNT = 32
+    GRID_LINE_COLOR = [32, 32, 32, 32]
 
-    def __init__(self, protein, window, bounding_box=None, point_size=8):
+    def __init__(self, protein, window, bounding_box=None, point_size=6):
         """
         @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window
@@ -57,7 +59,7 @@ class EmbeddingRenderer:
         # Define a 2D space where the data is contained
         self.data_bounding_box = [min_point[0], min_point[1], max_point[0], max_point[1]]
         self.data_height = self.data_bounding_box[3] - self.data_bounding_box[1]
-        self.data_width = self.data_bounding_box[2] - self.data_bounding_box[1]
+        self.data_width = self.data_bounding_box[2] - self.data_bounding_box[0]
 
         # Normalize the points to the domain [0, 1] for more convenient plotting
         self.norm_points = np.zeros(len(self.protein.embedding_points))
@@ -79,6 +81,7 @@ class EmbeddingRenderer:
 
         # Default to full-screen render
         self.bounding_box = []
+        self.grid_list = None
         if bounding_box is None:
             self.set_bounding_box([0, 0, window.width, window.height])
         else:
@@ -117,7 +120,29 @@ class EmbeddingRenderer:
             v = (y - world_box[1]) / world_box[3]
 
             self.scaled_points[i] = u * self.bounding_box[2] + self.bounding_box[0]
-            self.scaled_points[i + 1] = v * self.bounding_box[2] + self.bounding_box[1]
+            self.scaled_points[i + 1] = v * self.bounding_box[3] + self.bounding_box[1]
+
+        grid_points = []
+        for i in range(0, self.GRID_LINE_COUNT + 1):
+            size = 1.0 / self.GRID_LINE_COUNT
+            u1 = (0.0 - world_box[0]) / world_box[2] * self.bounding_box[2] + self.bounding_box[0]
+            u2 = (1.0 - world_box[0]) / world_box[2] * self.bounding_box[2] + self.bounding_box[0]
+            v1 = (i * size - world_box[1]) / world_box[3] * self.bounding_box[3] + self.bounding_box[1]
+
+            grid_points.extend([u1, v1, u2, v1])
+
+            u3 = (i * size - world_box[0]) / world_box[2] * self.bounding_box[2] + self.bounding_box[0]
+            v2 = (0.0 - world_box[1]) / world_box[3] * self.bounding_box[3] + self.bounding_box[1]
+            v3 = (1.0 - world_box[1]) / world_box[3] * self.bounding_box[3] + self.bounding_box[1]
+
+            grid_points.extend([u3, v2, u3, v3])
+
+        self.grid_list = pyglet.graphics.vertex_list(
+            len(grid_points) // 2,
+            ('v2f', grid_points),
+            ('c4B', self.GRID_LINE_COLOR * (len(grid_points) // 2))
+        )
+
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),
@@ -150,6 +175,8 @@ class EmbeddingRenderer:
         background = pyglet.shapes.Rectangle(*self.bounding_box, color=(255, 255, 255))
         background.opacity = self.BACKGROUND_OPACITY
         background.draw()
+
+        self.grid_list.draw(pyglet.gl.GL_LINES)
 
         glPointSize(self.point_size)
         self.vertices.draw(pyglet.gl.GL_POINTS)

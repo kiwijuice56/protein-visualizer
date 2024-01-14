@@ -16,7 +16,7 @@ window = pyglet.window.Window(resizable=True)
 window.set_exclusive_mouse(False)
 
 # Initialize protein
-protein = Protein(sys.argv[1])
+protein = Protein(sys.argv[1] if len(sys.argv) > 1 else "data/alphafold_generation.pdb")
 
 # Initialize rendering windows
 pdb_renderer = PDBRenderer(protein, window)
