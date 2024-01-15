@@ -223,5 +223,5 @@ class Protein:
                     color.rgb = get_color_from_palette(self.poisson_palette)
 
         if highlight:
-            color.set_luminance(color.get_luminance() + 0.25)
+            color.set_luminance(min(1.0, color.get_luminance() + 0.25))
         return to_rgb(color)
