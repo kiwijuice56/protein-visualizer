@@ -38,7 +38,7 @@ class EmbeddingRenderer:
     POINT_OPACITY = 200
     BACKGROUND_COLOR = (0, 0, 0, 140)
     GRID_LINE_COUNT = 32
-    GRID_LINE_COLOR = [255, 255, 255, 32]
+    GRID_LINE_COLOR = (255, 255, 255, 32)
 
     def __init__(self, protein, window, bounding_box=None, point_size=6):
         """

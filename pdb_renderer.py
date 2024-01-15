@@ -76,11 +76,12 @@ class Camera3D(object):
         glTranslatef(*camera_trans)
         glTranslatef(*self.pivot_pos)
 
-
 # Renders the 3D structure of a protein
 class PDBRenderer:
     GRID_LINE_COUNT = 16
     BACKGROUND_COLOR = (98, 98, 98, 255)
+    X_AXIS_COLOR = (255, 56, 89, 48)
+    Z_AXIS_COLOR = (56, 109, 255, 48)
     GRID_LINE_COLOR = (255, 255, 255, 32)
     POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees
@@ -130,17 +131,22 @@ class PDBRenderer:
 
         self.camera = Camera3D(window)
 
-        grid_points = []
+        grid_points, colors = [], []
         for i in range(0, self.GRID_LINE_COUNT + 1):
             size = 1.0 / self.GRID_LINE_COUNT
 
             grid_points.extend([-128, -32, i * size * 256 - 128, 128, -32, i * size * 256 - 128])
             grid_points.extend([i * size * 256 - 128, -32, -128, i * size * 256 - 128, -32, 128])
+            if i == self.GRID_LINE_COUNT / 2:
+                colors.extend(self.X_AXIS_COLOR * 2)
+                colors.extend(self.Z_AXIS_COLOR * 2)
+            else:
+                colors.extend(self.GRID_LINE_COLOR * 4)
 
         self.grid_list = pyglet.graphics.vertex_list(
             len(grid_points) // 3,
             ('v3f', grid_points),
-            ('c4B', self.GRID_LINE_COLOR * (len(grid_points) // 3))
+            ('c4B', colors)
         )
 
     def update_colors(self, start=0, end=-1):
