@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>protein-visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="#Home">Home</a>
+        <a href="#Usage">Usage</a>
+        <a href="#Code">Code</a>
+        <a href="#Attribution">Attribution</a>
+    </nav>
+
+    <section id="Content">
+        <section id="Home">
+            <h1>protein-visualizer</h1>
+            <p>A program to visualize proteins and the function of its individual amino acids through deep learning. </p>
+            <img src="demo_run.png" alt="Demonstration of running the visualizer"/>
+        </section>
+
+        <section id="Usage">
+            <h1>Usage</h1>
+            <p>The visualizer accepts a Protein Data Bank (PDB) format file encoding the structure and sequence of
+                a protein. You can download proteins from
+                <a href="https://www.rcsb.org/">RCSB Protein Data Bank</a> to test out with this program.
+                Installation and execution requires three steps:
+            </p>
+            <ol>
+                <li>Clone the <a href="https://github.com/kiwijuice56/protein-visualizer">Protein Visualizer GitHub repository.</a></li>
+                <li>Download and configure the pretrained models in <code>protein-visualizer/prose/</code> according to the instructions on the <a href="https://github.com/tbepler/prose">ProSE GitHub repository.</a></li>
+                <li>Navigate to <code>protein-visualizer/</code> and run <code>python main.py [path to .pdb file]</code>.</li>
+            </ol>
+            <p>Before viewing a certain protein chain, the program generates and stores embeddings in
+                <code>protein-visualizer/data/</code> for future use. Deleting stored embeddings can be a possible fix
+                to errors.
+            </p>
+
+        </section>
+
+        <section id="Code">
+            <h1>Code</h1>
+            All of the code is available under the MIT license on the <a href="https://github.com/kiwijuice56/protein-visualizer">Protein Visualizer GitHub repository.</a>
+        </section>
+
+        <section id="Attribution">
+            <h1>Attribution</h1>
+            <ul>
+                <li>
+                    <a href="https://ericalfaro.dev/">Eric Alfaro</a>: Primary program developer as part of an MIT UROP project under the guidance of Dr. Manolis Kellis and Dr. Tianlong Chen.
+                </li>
+                <li>
+                    <a href="https://github.com/tbepler/prose/">Protein Sequence Embeddings (ProSE)</a>: Amino acid embedding code and pre-trained models.
+                    <ul>
+                        <li>Bepler, T., Berger, B. Learning the protein language: evolution, structure, and function. Cell Systems 12, 6 (2021). https://doi.org/10.1016/j.cels.2021.05.017</li>
+                        <li>Bepler, T., Berger, B. Learning protein sequence embeddings using information from structure. International Conference on Learning Representations (2019). https://openreview.net/pdf?id=SygLehCqtm</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+        <footer>©2024 Eric Alfaro </footer>
+    </section>
+</body>
+
+</html>

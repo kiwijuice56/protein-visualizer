@@ -1,9 +1,6 @@
 # protein-visualizer
 A protein visualization program that uses deep learning to map 3D structure to amino acid function.
 
-![Protein rendered using this program](images/picture_demonstration.png)
-
-
 ## Usage
 1. Download this repository
 2. Download and configure the pretrained models in `prose/` according to the 

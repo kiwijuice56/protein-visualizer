@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+body {
+    padding-left: 16%;
+    padding-top: 5%;
+    line-height: 2.0;
+    font-family: 'Lato', sans-serif;
+    color: #323232;
+}
+
+nav {
+    width: 150px;
+    margin: 0;
+    padding: 0;
+    float: left;
+    display: inline;
+    margin-right: 10px;
+}
+
+nav a {
+    display: block;
+}
+
+a:link, a:visited, a:active {
+    color: #136a6b;
+}
+
+nav a:link, nav a:visited, nav a:active {
+    color: #323232;
+    text-decoration: none;
+}
+
+a:hover, nav a:hover {
+    color: #2aa383;
+    text-decoration: underline;
+}
+
+section, footer {
+    float: left;
+    margin: 0;
+    padding: 0;
+    display: inline;
+    width: 75%;
+}
+
+footer {
+    padding: 2em;
+    text-align: center;
+    color: #989898;
+}
+
+code {
+    font-size: inherit;
+}
+
+img {
+    width: 100%;
+}
+
+@media(max-width: 800px) {
+    section {
+        width: 100%;
+        padding-left:
+    }
+
+    body {
+        padding-left: 8%;
+        padding-right: 8%;
+    }
+}
