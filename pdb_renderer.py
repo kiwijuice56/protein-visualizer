@@ -76,6 +76,7 @@ class Camera3D(object):
         glTranslatef(*camera_trans)
         glTranslatef(*self.pivot_pos)
 
+
 # Renders the 3D structure of a protein
 class PDBRenderer:
     GRID_LINE_COUNT = 16
@@ -102,6 +103,7 @@ class PDBRenderer:
         self.point_size = 0
         self.set_point_size(point_size)
         self.outline = outline
+        self.hovered_residue = -1
 
         if bounding_box is None:
             self.bounding_box = (0, -window.height, window.width, window.height)
@@ -118,10 +120,15 @@ class PDBRenderer:
             point_coordinates[i * 3 + 1] = atom.bio_atom.get_coord()[1] - offset[1]
             point_coordinates[i * 3 + 2] = atom.bio_atom.get_coord()[2] - offset[2]
 
+        rgb_id = [[(i >> 16) & 255, (i >> 8) & 255, i & 255] for i in range(1, len(self.protein.atoms) + 1)]
         self.atom_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
             ('v3f', point_coordinates),
             ('c3B', np.zeros(len(self.protein.atoms) * 3, dtype=np.byte)))
+        self.id_vertices = pyglet.graphics.vertex_list(
+            len(self.protein.atoms),
+            ('v3f', point_coordinates),
+            ('c3B', [x for xs in rgb_id for x in xs]))
         self.update_colors()
 
         self.outline_vertices = pyglet.graphics.vertex_list(
@@ -172,6 +179,7 @@ class PDBRenderer:
         self.camera.input_handler.bounding_box = bounding_box
 
     def draw(self):
+        glClearColor(*[0] * 4)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_POINT_SMOOTH)
         glEnable(GL_SCISSOR_TEST)
@@ -182,20 +190,35 @@ class PDBRenderer:
 
         self.camera.draw()
 
-        glClearColor(*[c / 255.0 for c in self.BACKGROUND_COLOR])
         glScissor(*self.bounding_box)
 
-        glEnable(GL_LINE_SMOOTH)
-        self.grid_list.draw(pyglet.gl.GL_LINES)
+        glPointSize(int(1.5 * self.point_size))
+        glDisable(GL_POINT_SMOOTH)
+        glEnable(GL_DEPTH_TEST)
+        self.id_vertices.draw(GL_POINTS)
 
+        read = (GLubyte * 3)(0)
+        glReadPixels(self.camera.input_handler.x, self.camera.input_handler.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, read)
+        selected_id = sum([read[i] << (8 * (2 - i)) for i in range(3)])
+        if not selected_id == 0:
+            self.hovered_residue = self.protein.atoms[selected_id - 1].residue.index
+        else:
+            self.hovered_residue = -1
+
+        glClearColor(*[c / 255.0 for c in self.BACKGROUND_COLOR])
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_LINE_SMOOTH)
+        self.grid_list.draw(GL_LINES)
+
+        glEnable(GL_POINT_SMOOTH)
         if self.outline:
             glDisable(GL_DEPTH_TEST)
             glPointSize(int(self.point_size * 1.5))
-            self.outline_vertices.draw(pyglet.gl.GL_POINTS)
+            self.outline_vertices.draw(GL_POINTS)
 
         glPointSize(self.point_size)
         glEnable(GL_DEPTH_TEST)
-        self.atom_vertices.draw(pyglet.gl.GL_POINTS)
+        self.atom_vertices.draw(GL_POINTS)
 
         # Clean up
         glDisable(GL_SCISSOR_TEST)

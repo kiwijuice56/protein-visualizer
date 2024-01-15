@@ -3,6 +3,8 @@ import pyglet
 
 class InputHandler(object):
     def __init__(self):
+        self.x = 0
+        self.y = 0
         self.dx_left = 0
         self.dy_left = 0
         self.dx_middle = 0
@@ -36,3 +38,7 @@ class InputHandler(object):
             self.dx_middle = dx
             self.dy_middle = dy
         return pyglet.event.EVENT_HANDLED
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.x = x
+        self.y = y

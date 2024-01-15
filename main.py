@@ -14,9 +14,10 @@ import math
 # Initialize window
 window = pyglet.window.Window(resizable=True)
 window.set_caption("protein-visualizer")
+fps_display = pyglet.window.FPSDisplay(window=window)
 
 # Initialize protein
-default_path = "data/alphafold_generation.pdb"
+default_path = "data/3fpz.pdb"
 protein = Protein(sys.argv[1] if len(sys.argv) > 1 else default_path)
 
 # Initialize rendering windows
@@ -28,33 +29,6 @@ highlight_index = 0
 
 # Add inputs for the renderer parameters
 def on_key_press(symbol, modifiers):
-    global highlight_index
-    old_index = highlight_index
-    if symbol == key.LEFT:
-        highlight_index -= 1
-    if symbol == key.RIGHT:
-        highlight_index += 1
-
-    if highlight_index < 0:
-        highlight_index = len(protein.residues) + highlight_index
-    elif highlight_index >= len(protein.residues):
-        highlight_index -= len(protein.residues)
-
-    protein.residues[old_index].highlighted = False
-    protein.color_residue(protein.residues[old_index])
-
-    protein.residues[highlight_index].highlighted = True
-    protein.color_residue(protein.residues[highlight_index])
-
-    if old_index != highlight_index:
-        pdb_renderer.update_colors(protein.residues[old_index].atoms[0].index,
-                                   protein.residues[old_index].atoms[-1].index + 1)
-        pdb_renderer.update_colors(protein.residues[highlight_index].atoms[0].index,
-                                   protein.residues[highlight_index].atoms[-1].index + 1)
-
-        embedding_renderer.update_colors(old_index, old_index + 1)
-        embedding_renderer.update_colors(highlight_index, highlight_index + 1)
-
     if symbol == key.UP:
         pdb_renderer.set_point_size(pdb_renderer.point_size + 1)
     if symbol == key.DOWN:
@@ -86,7 +60,30 @@ def on_key_press(symbol, modifiers):
         pdb_renderer.outline = not pdb_renderer.outline
 
 
+def on_mouse_motion(x, y, dx, dy):
+    global highlight_index
+    old_index = highlight_index
+    if not pdb_renderer.hovered_residue == -1:
+        highlight_index = pdb_renderer.hovered_residue
+
+    protein.residues[old_index].highlighted = False
+    protein.color_residue(protein.residues[old_index])
+
+    protein.residues[highlight_index].highlighted = True
+    protein.color_residue(protein.residues[highlight_index])
+
+    if old_index != highlight_index:
+        pdb_renderer.update_colors(protein.residues[old_index].atoms[0].index,
+                                   protein.residues[old_index].atoms[-1].index + 1)
+        pdb_renderer.update_colors(protein.residues[highlight_index].atoms[0].index,
+                                   protein.residues[highlight_index].atoms[-1].index + 1)
+
+        embedding_renderer.update_colors(old_index, old_index + 1)
+        embedding_renderer.update_colors(highlight_index, highlight_index + 1)
+
+
 window.push_handlers(on_key_press)
+window.push_handlers(on_mouse_motion)
 
 
 @window.event
@@ -125,7 +122,6 @@ def on_draw():
             adj = len(protein.residues) + adj
         if adj >= len(protein.residues):
             adj -= len(protein.residues)
-        digit_length = int(math.log10(len(protein.residues))) + 1
         snippet = f"{'%-8d' % protein.residues[adj].seq_index}"
         color = tuple((255, 230, 0, 255) if i == 0 else [255, 255, 255, 255])
         text_style["color"] = color
