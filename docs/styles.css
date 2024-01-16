@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Lato');
+@import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
 
 body {
     padding-left: 16%;
@@ -6,6 +7,15 @@ body {
     line-height: 2.0;
     font-family: 'Lato', sans-serif;
     color: #323232;
+    font-size: 16px;
+}
+
+h1 {
+    font-size: 24px;
+}
+
+h2 {
+    font-size: 16px;
 }
 
 nav {
@@ -50,14 +60,21 @@ footer {
 }
 
 code {
-    font-size: inherit;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 15px;
+    background-color: #5b5e5e;
+    color: #e6eced;
+    border-radius: 2px;
+    padding: 1px;
+    margin-left: 1px;
+    margin-right: 1px;
 }
 
 img {
     width: 100%;
 }
 
-@media(max-width: 800px) {
+@media(max-width: 1024px) {
     section {
         width: 100%;
         padding-left:

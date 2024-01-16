@@ -1,21 +1,6 @@
 # protein-visualizer
 A protein visualization program that uses deep learning to map 3D structure to amino acid function.
-
-## Usage
-1. Download this repository
-2. Download and configure the pretrained models in `prose/` according to the 
-instructions on https://github.com/tbepler/prose.
-3. Navigate to the main directory and run: `python main.py [path to .pdb file]`
-
-## Controls
-- `Left Mouse Drag`: Move the camera in both 3D and 2D space
-- `Right Mouse Drag`: Rotate the camera in 3D space
-- `Left/Right Arrow`: Shift which residue is currently highlighted
-- `Up/Down Arrow`: Increase and decrease atom point size
-- `1/2/3`: Changes color mode
-- `8/9` Changes color palette
-- `O`: Toggles atom outline
-- `Esc`: Close the program
+See [website](https://kiwijuice56.github.io/protein-visualizer/) for installation and usage details.
 
 ## Libraries
 - `pyglet 1.5.28` as an OpenGL interface

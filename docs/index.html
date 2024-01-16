@@ -3,6 +3,7 @@
 <head>
     <title>protein-visualizer</title>
     <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
     <nav>
@@ -15,13 +16,14 @@
     <section id="Content">
         <section id="Home">
             <h1>protein-visualizer</h1>
-            <p>A program to visualize proteins and the function of its individual amino acids through deep learning.
-            Details on the development of this project can be found on this <a href="https://docs.google.com/document/d/1QoDJ-9GYf1J3wcvT00dr2pe17GH6pB0pjQKeIDS8k3s/edit?usp=sharing">Google document.</a></p>
+            <p>A program to visualize proteins and the function of its individual amino acids through deep learning.</p>
             <img src="demo_run.png" alt="Demonstration of running the visualizer"/>
         </section>
 
         <section id="Usage">
             <h1>Usage</h1>
+            <h2>Installation</h2>
+            <i>Note: Later versions will have a more streamlined installation process.</i>
             <p>The visualizer accepts a Protein Data Bank (PDB) format file encoding the structure and sequence of
                 a protein. You can download proteins from
                 <a href="https://www.rcsb.org/">RCSB Protein Data Bank</a> to test out with this program.
@@ -36,6 +38,27 @@
                 <code>protein-visualizer/data/</code> for future use. Deleting stored embeddings can be a possible fix
                 to errors.
             </p>
+            <h2>Controls</h2>
+            <ul>
+                <li><code>Left Mouse</code>: Translate the camera and navigate the embedding space.</li>
+                <li><code>Right/Middle Mouse</code>: Rotate the camera.</li>
+                <li><code>Up/Down Arrow</code>: Increase/decrease atom point size.</li>
+                <li><code>1/2/3</code>: Switch between color modes.
+                    <ul>
+                        <li><code>RESIDUE_INDEX</code>: Colors residues by their placement in the amino acid sequence.</li>
+                        <li><code>CLUSTER_INDEX</code>: (Default) Colors residues by what cluster they belong to
+                            in the embedding space. Shows similarity between amino acids.</li>
+                        <li><code>ATOM_TYPE</code>: Colors residues by their atoms in the CPK color scheme. Overrides color palette setting.</li>
+                    </ul>
+                </li>
+                <li><code>8/9</code>: Switch between color palettes.
+                    <ul>
+                        <li><code>POISSON</code>: A calm, natural set of hues.</li>
+                        <li><code>RAINBOW</code>: (Default) Bright and colorful!</li>
+                    </ul>
+                </li>
+                <li><code>O</code>: Toggles atom outline.</li>
+            </ul>
 
         </section>
 
