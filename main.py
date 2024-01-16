@@ -3,18 +3,33 @@ from embedding_renderer import EmbeddingRenderer
 from protein import Protein
 from user_interface import UserInterface
 
-import sys
-
 import pyglet
 from pyglet.gl import *
+
+import tkinter as tk
+from tkinter import filedialog
+
+from ctypes import windll
+
+
+# Fix screen resolution
+windll.shcore.SetProcessDpiAwareness(1)
+
+root = tk.Tk()
+root.iconbitmap("icon.ico")
+root.withdraw()
+
+# Initialize protein
+protein = Protein(filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')]))
 
 # Initialize window
 window = pyglet.window.Window(resizable=True)
 window.set_caption("protein-visualizer")
+icon_ico = pyglet.image.load("icon.ico")
+icon_png = pyglet.image.load("icon.png")
+window.set_icon(icon_ico, icon_png)
 
-# Initialize protein
-default_path = "data/alphafold_generation.pdb"
-protein = Protein(sys.argv[1] if len(sys.argv) > 1 else default_path)
+root.destroy()
 
 # Initialize renderers
 pdb_renderer = PDBRenderer(protein, window)

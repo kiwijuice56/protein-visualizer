@@ -156,6 +156,7 @@ class Protein:
         db = DBSCAN(eps=cluster_distance).fit(transform)
         self.cluster_index = db.labels_
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
+        print("Embedding calculations complete.")
 
         self.update_colors()
 

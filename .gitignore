@@ -2,3 +2,6 @@
 __pycache__/*
 data/*
 *.h5
+build/*
+dist/*
+main.spec
