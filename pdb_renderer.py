@@ -81,8 +81,8 @@ class Camera3D(object):
 class PDBRenderer:
     GRID_LINE_COUNT = 16
     BACKGROUND_COLOR = (98, 98, 98, 255)
-    X_AXIS_COLOR = (255, 56, 89, 48)
-    Z_AXIS_COLOR = (56, 109, 255, 48)
+    X_AXIS_COLOR = (255, 56, 89, 98)
+    Z_AXIS_COLOR = (56, 109, 255, 98)
     GRID_LINE_COLOR = (255, 255, 255, 32)
     POINT_SIZE_RANGE = (1, 20)
     FOV = 65  # Degrees
