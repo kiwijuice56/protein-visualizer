@@ -113,7 +113,9 @@ class Protein:
         # Parse the PDB structure data
         self.residues = []
         self.atoms = []
-        atom_index = 0
+
+        # Find the first sequence index as an offset for later on
+        atom_index, seq_index_offset = 0, -1
         for i, bio_residue in enumerate(chain.get_residues()):
             seq_index = bio_residue.get_id()[1]
             # Remove any residues not in range (often, these are water molecules)
@@ -121,6 +123,8 @@ class Protein:
                 continue
             if seq_index >= physical_record.annotations["end"]:
                 continue
+            if seq_index_offset == -1:
+                seq_index_offset = bio_residue.get_id()[1]
             residue_atoms = []
             residue = Residue(residue_atoms, bio_residue, i, seq_index)
             for bio_atom in bio_residue.get_atoms():
@@ -142,7 +146,7 @@ class Protein:
         embeddings = embedding_file[list(embedding_file.keys())[0]][()]
         realized_embeddings = []
         for residue in self.residues:
-            realized_embeddings.append(embeddings[residue.seq_index])
+            realized_embeddings.append(embeddings[residue.seq_index - seq_index_offset])
 
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
         transform = TSNE(n_components=2, perplexity=3).fit_transform(np.array(realized_embeddings))

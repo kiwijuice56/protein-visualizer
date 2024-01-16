@@ -6,7 +6,7 @@ from pyglet.gl import *
 
 
 class Camera3D(object):
-    ZOOM_RANGE = (0.01, 256)
+    ZOOM_RANGE = (0.01, 512)
     VERTICAL_ROTATION_LIMIT = 0.1
 
     def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.01, scroll_sensitivity=0.1):
@@ -113,7 +113,11 @@ class PDBRenderer:
         self.residue_type = {}
 
         # Create vertex data for OpenGL
-        offset = protein.residues[0].atoms[0].bio_atom.get_coord()
+        lowest_atom, offset = 0, self.protein.atoms[0].bio_atom.get_coord()
+        for i, atom in enumerate(self.protein.atoms):
+            if atom.bio_atom.get_coord()[1] < self.protein.atoms[lowest_atom].bio_atom.get_coord()[1]:
+                lowest_atom = i
+                offset = self.protein.atoms[lowest_atom].bio_atom.get_coord()
         point_coordinates = np.zeros(len(self.protein.atoms) * 3)
         for i, atom in enumerate(self.protein.atoms):
             point_coordinates[i * 3] = atom.bio_atom.get_coord()[0] - offset[0]
@@ -142,8 +146,8 @@ class PDBRenderer:
         for i in range(0, self.GRID_LINE_COUNT + 1):
             size = 1.0 / self.GRID_LINE_COUNT
 
-            grid_points.extend([-128, -32, i * size * 256 - 128, 128, -32, i * size * 256 - 128])
-            grid_points.extend([i * size * 256 - 128, -32, -128, i * size * 256 - 128, -32, 128])
+            grid_points.extend([-128, -8, i * size * 256 - 128, 128, -8, i * size * 256 - 128])
+            grid_points.extend([i * size * 256 - 128, -8, -128, i * size * 256 - 128, -8, 128])
             if i == self.GRID_LINE_COUNT / 2:
                 colors.extend(self.X_AXIS_COLOR * 2)
                 colors.extend(self.Z_AXIS_COLOR * 2)
