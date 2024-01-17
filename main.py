@@ -12,11 +12,15 @@ from tkinter import filedialog
 from ctypes import windll
 
 
+print("protein-visualizer version 0.0, documentation: https://kiwijuice56.github.io/protein-visualizer/")
+print("-" * 8)
+print("Select a .pdb file to render.")
+
 # Fix screen resolution
 windll.shcore.SetProcessDpiAwareness(1)
 
 root = tk.Tk()
-root.iconbitmap("icon.ico")
+root.iconbitmap("img/icon.ico")
 root.withdraw()
 
 # Initialize protein
@@ -25,8 +29,8 @@ protein = Protein(filedialog.askopenfilename(title="Select a protein file", file
 # Initialize window
 window = pyglet.window.Window(resizable=True)
 window.set_caption("protein-visualizer")
-icon_ico = pyglet.image.load("icon.ico")
-icon_png = pyglet.image.load("icon.png")
+icon_ico = pyglet.image.load("img/icon.ico")
+icon_png = pyglet.image.load("img/icon.png")
 window.set_icon(icon_ico, icon_png)
 
 root.destroy()

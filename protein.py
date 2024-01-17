@@ -66,8 +66,11 @@ class Protein:
         self.color_mode = color_mode
         self.color_palette = color_palette
 
+        warnings.filterwarnings("ignore")
+
+        print("Loading protein structure.")
+
         # Get the full 3D structure from the PDB file
-        warnings.filterwarnings("ignore", "'HEADER' line not found; can't determine PDB ID.")
         bio_structure = Bio.PDB.PDBParser(QUIET=True).get_structure("struct", pdb_path)
 
         # Choose default chain if none specified
@@ -87,6 +90,8 @@ class Protein:
                 f"Chain with ID '{chain_id}' could not be found within .pdb file."
                 f"Available chains: {[chain.get_id() for chain in chains]}.")
 
+        print(f"Rendering chain with ID '{chain_id}' from {[chain.get_id() for chain in chains]}")
+
         # There are two methods of attaining an amino acid sequence from a PDB file: `atom` and `seqres`
         # `atom` calculates the sequence from the available residues found in the 3D space
         # `seqres` retrieves the sequence from the PDB file metadata
@@ -101,8 +106,7 @@ class Protein:
             if other_record.annotations["chain"] == chain_id:
                 full_record = other_record
         if full_record is None:
-            warnings.warn("Could not read SEQRES information; Continuing with sequence as determined from the 3D "
-                          "structure.", stacklevel=2)
+            print("Could not read SEQRES info; Continuing with sequence as determined from the 3D structure.")
             full_record = physical_record
 
         prot_name = "".join(x for x in full_record.name if x.isalnum())
@@ -135,11 +139,11 @@ class Protein:
 
         # Calculate embeddings with ProSE
         if not os.path.isfile(f"data/{prot_name}_{chain_id}_embeddings.h5"):
-            print("Embeddings not found in `data` directory. Generating new embeddings.")
+            print("Embeddings not found in 'data' directory. Generating new embeddings.")
             subprocess.call(["python", "prose/embed_sequences.py", '-o', f"data/{prot_name}_{chain_id}_embeddings.h5",
                              f"data/{prot_name}_{chain_id}.fa"], shell=True)
         else:
-            print("Embeddings from previous session found in `data` directory.")
+            print("Embeddings from previous session found in 'data' directory.")
 
         # Parse the embeddings file for the residues we will render
         embedding_file = h5py.File(f"data/{prot_name}_{chain_id}_embeddings.h5", 'r')
@@ -147,6 +151,8 @@ class Protein:
         realized_embeddings = []
         for residue in self.residues:
             realized_embeddings.append(embeddings[residue.seq_index - seq_index_offset])
+
+        print("Calculating 2D projection and clusters.")
 
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
         transform = TSNE(n_components=2, perplexity=3).fit_transform(np.array(realized_embeddings))
