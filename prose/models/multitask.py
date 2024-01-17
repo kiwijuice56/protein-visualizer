@@ -18,9 +18,8 @@ class ProSEMT(nn.Module):
     @staticmethod
     def load_pretrained(path='prose_mt'):
         if path is None or path == 'prose_mt':
-            root = get_project_root()
-            path = os.path.join(root, 'saved_models', 'prose_mt_3x1024.sav')
-
+            path = os.path.join('saved_models', 'prose_mt_3x1024.sav')
+            
         from prose.models.lstm import SkipLSTM
         encoder = SkipLSTM(21, 21, 1024, 3)
         encoder.cloze = encoder.proj

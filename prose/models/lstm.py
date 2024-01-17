@@ -36,9 +36,7 @@ class SkipLSTM(nn.Module):
     @staticmethod
     def load_pretrained(path='prose_dlm'):
         if path is None or path == 'prose_dlm':
-            root = get_project_root()
-            path = os.path.join(root, 'saved_models', 'prose_dlm_3x1024.sav')
-
+            path = os.path.join('saved_models', 'prose_dlm_3x1024.sav')
         model = SkipLSTM(21, 21, 1024, 3)
         state_dict = torch.load(path, map_location=torch.device('cpu'))
         model.load_state_dict(state_dict)
