@@ -1,5 +1,6 @@
+import sequence_embedder
+
 import os
-import subprocess
 import warnings
 
 import Bio.PDB
@@ -12,7 +13,6 @@ import colour
 import h5py
 from sklearn.manifold import TSNE
 from sklearn.cluster import DBSCAN
-
 
 # Wrapper class for single atoms
 class Atom:
@@ -140,8 +140,8 @@ class Protein:
         # Calculate embeddings with ProSE
         if not os.path.isfile(f"data/{prot_name}_{chain_id}_embeddings.h5"):
             print("Embeddings not found in 'data' directory. Generating new embeddings.")
-            subprocess.call(["python", "prose/embed_sequences.py", '-o', f"data/{prot_name}_{chain_id}_embeddings.h5",
-                             f"data/{prot_name}_{chain_id}.fa"], shell=True)
+            sequence_embedder.generate_embeddings(f"data/{prot_name}_{chain_id}_embeddings.h5",
+                                                  f"data/{prot_name}_{chain_id}.fa")
         else:
             print("Embeddings from previous session found in 'data' directory.")
 

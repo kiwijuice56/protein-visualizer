@@ -5,3 +5,4 @@ data/*
 build/*
 dist/*
 main.spec
+saved_models/*
