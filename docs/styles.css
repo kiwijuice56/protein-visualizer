@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
 
 body {
-    padding-left: 16%;
+    padding-left: 12%;
     padding-top: 5%;
     line-height: 2.0;
     font-family: 'Lato', sans-serif;
@@ -19,12 +19,15 @@ h2 {
 }
 
 nav {
-    width: 150px;
+    width: 200px;
+    height: 100%;
     margin: 0;
     padding: 0;
     float: left;
-    display: inline;
     margin-right: 10px;
+    position: sticky;
+    position: -webkit-sticky;
+    top: 48px;
 }
 
 nav a {
@@ -74,14 +77,28 @@ img {
     width: 100%;
 }
 
+#Icon  {
+    width: 16px;
+    padding-left: 4px;
+}
+
+body {
+    display: flex;
+}
+
 @media(max-width: 1024px) {
     section {
         width: 100%;
-        padding-left:
     }
 
     body {
-        padding-left: 8%;
-        padding-right: 8%;
+        display: block;
+        padding: 0;
+        margin-left: 8%;
+        margin-right: 8%;
+    }
+
+    nav {
+        position: static;
     }
 }

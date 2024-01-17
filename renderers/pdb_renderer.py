@@ -1,4 +1,4 @@
-from input_handler import InputHandler
+from gui.input_handler import InputHandler
 
 import numpy as np
 import pyglet

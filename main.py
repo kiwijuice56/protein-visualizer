@@ -1,7 +1,7 @@
-from pdb_renderer import PDBRenderer
-from embedding_renderer import EmbeddingRenderer
+from renderers.pdb_renderer import PDBRenderer
+from renderers.embedding_renderer import EmbeddingRenderer
 from protein import Protein
-from user_interface import UserInterface
+from gui.user_interface import UserInterface
 
 import pyglet
 from pyglet.gl import *

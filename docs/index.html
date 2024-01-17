@@ -8,37 +8,35 @@
 </head>
 <body>
     <nav>
-        <a href="#Home">Home</a>
+        <a href="#Home"><b>protein-visualizer</b><img src="favicon.ico" id="Icon"/></a>
         <a href="#Usage">Usage</a>
         <a href="#Code">Code</a>
         <a href="#Attribution">Attribution</a>
     </nav>
-
     <section id="Content">
         <section id="Home">
             <h1>protein-visualizer</h1>
             <p>A program to visualize proteins and the function of its individual amino acids through deep learning.</p>
             <img src="demo_run.png" alt="Demonstration of running the visualizer"/>
         </section>
-
         <section id="Usage">
             <h1>Usage</h1>
             <h2>Installation</h2>
-            <i>Note: Later versions will have a more streamlined installation process.</i>
+            <p>Download and extract the latest release from the
+                <a href="https://github.com/kiwijuice56/protein-visualizer/releases">protein-visualizer release page.</a>
+            Run <code>protein-visualizer-x.x/main.exe</code> and select your protein file in the file dialog.
+            </p>
             <p>The visualizer accepts a Protein Data Bank (PDB) format file encoding the structure and sequence of
                 a protein. You can download proteins from
                 <a href="https://www.rcsb.org/">RCSB Protein Data Bank</a> to test out with this program.
-                Installation and execution requires three steps:
             </p>
-            <ol>
-                <li>Clone the <a href="https://github.com/kiwijuice56/protein-visualizer">Protein Visualizer GitHub repository.</a></li>
-                <li>Download and configure the pretrained models in <code>protein-visualizer/prose/</code> according to the instructions on the <a href="https://github.com/tbepler/prose">ProSE GitHub repository.</a></li>
-                <li>Navigate to <code>protein-visualizer/</code> and run <code>python main.py [path to .pdb file]</code>.</li>
-            </ol>
             <p>Before viewing a certain protein chain, the program generates and stores embeddings in
-                <code>protein-visualizer/data/</code> for future use. Deleting stored embeddings can be a possible fix
-                to errors.
+                <code>protein-visualizer-x.x/data/</code> for future use. Deleting the files in this folder
+                can be a possible fix to errors.
             </p>
+            <p> The <code>protein-visualizer-x.x/saved_models/</code> folder contains the pre-trained models created by
+            the ProSE team.</p>
+
             <h2>Controls</h2>
             <ul>
                 <li><code>Left Mouse</code>: Translate the camera and navigate the embedding space.</li>
@@ -46,9 +44,9 @@
                 <li><code>Up/Down Arrow</code>: Increase/decrease atom point size.</li>
                 <li><code>1/2/3</code>: Switch between color modes.
                     <ul>
-                        <li><code>RESIDUE_INDEX</code>: Colors residues by their placement in the amino acid sequence.</li>
                         <li><code>CLUSTER_INDEX</code>: (Default) Colors residues by what cluster they belong to
                             in the embedding space. Shows similarity between amino acids.</li>
+                        <li><code>RESIDUE_INDEX</code>: Colors residues by their placement in the amino acid sequence.</li>
                         <li><code>ATOM_TYPE</code>: Colors residues by their atoms in the CPK color scheme. Overrides color palette setting.</li>
                     </ul>
                 </li>
@@ -60,14 +58,11 @@
                 </li>
                 <li><code>O</code>: Toggles atom outline.</li>
             </ul>
-
         </section>
-
         <section id="Code">
             <h1>Code</h1>
-            All of the code is available under the MIT license on the <a href="https://github.com/kiwijuice56/protein-visualizer">Protein Visualizer GitHub repository.</a>
+            All of the code is available under the MIT license on the <a href="https://github.com/kiwijuice56/protein-visualizer">protein-visualizer GitHub repository.</a>
         </section>
-
         <section id="Attribution">
             <h1>Attribution</h1>
             <ul>

@@ -8,3 +8,5 @@ main.spec
 saved_models/*
 prose/__pycache__/*
 prose/models/__pycache__/*
+gui/__pycache__/*
+renderers/__pycache__/*

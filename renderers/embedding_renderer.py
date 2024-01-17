@@ -2,7 +2,7 @@ import numpy as np
 import pyglet
 from pyglet.gl import *
 
-from input_handler import InputHandler
+from gui.input_handler import InputHandler
 
 
 class Camera2D(object):
