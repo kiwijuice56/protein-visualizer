@@ -6,3 +6,5 @@ build/*
 dist/*
 main.spec
 saved_models/*
+prose/__pycache__/*
+prose/models/__pycache__/*
