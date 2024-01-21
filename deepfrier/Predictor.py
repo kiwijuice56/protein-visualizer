@@ -79,7 +79,6 @@ class Predictor(object):
         return A, S, seq
 
     def predict(self, cmap, seq, cmap_thresh=10.0, chain='query_prot'):
-        print ("### Computing predictions on a single protein...")
         self.Y_hat = np.zeros((1, len(self.goterms)), dtype=float)
         self.goidx2chains = {}
         self.prot2goterms = {}
@@ -178,8 +177,6 @@ class Predictor(object):
                 self.prot2goterms[chain].append((self.goterms[idx], self.gonames[idx], float(y[idx])))
 
     def save_predictions(self, output_fn):
-        print ("### Saving predictions to *.json file...")
-        # pickle.dump({'pdb_chains': self.test_prot_list, 'Y_hat': self.Y_hat, 'goterms': self.goterms, 'gonames': self.gonames}, open(output_fn, 'wb'))
         with open(output_fn, 'w') as fw:
             out_data = {'pdb_chains': self.test_prot_list,
                         'Y_hat': self.Y_hat.tolist(),
@@ -203,27 +200,26 @@ class Predictor(object):
         csvFile.close()
 
     def compute_GradCAM(self, layer_name='GCNN_concatenate', use_guided_grads=False):
-        print ("### Computing GradCAM for each function of every predicted protein...")
+        print("Computing GradCAM for each predicted function of the protein.")
         gradcam = GradCAM(self.model, layer_name=layer_name)
 
         self.pdb2cam = {}
-        for go_indx in self.goidx2chains:
+        for i, go_indx in enumerate(self.goidx2chains):
             pred_chains = list(self.goidx2chains[go_indx])
-            print ("### Computing gradCAM for ", self.gonames[go_indx], '... [# proteins=', len(pred_chains), ']')
             for chain in pred_chains:
                 if chain not in self.pdb2cam:
                     self.pdb2cam[chain] = {}
                     self.pdb2cam[chain]['GO_ids'] = []
                     self.pdb2cam[chain]['GO_names'] = []
+                    self.pdb2cam[chain]['confidence'] = []
                     self.pdb2cam[chain]['sequence'] = None
                     self.pdb2cam[chain]['saliency_maps'] = []
                 self.pdb2cam[chain]['GO_ids'].append(self.goterms[go_indx])
                 self.pdb2cam[chain]['GO_names'].append(self.gonames[go_indx])
                 self.pdb2cam[chain]['sequence'] = self.data[chain][1]
                 self.pdb2cam[chain]['saliency_maps'].append(gradcam.heatmap(self.data[chain][0], go_indx, use_guided_grads=use_guided_grads).tolist())
+                self.pdb2cam[chain]['confidence'].append(self.prot2goterms[[p for p in self.prot2goterms][0]][i][2])
 
     def save_GradCAM(self, output_fn):
-        print ("### Saving CAMs to *.json file...")
-        # pickle.dump(self.pdb2cam, open(output_fn, 'wb'))
         with open(output_fn, 'w') as fw:
             json.dump(self.pdb2cam, fw, indent=1)

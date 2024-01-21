@@ -180,7 +180,6 @@ class Protein:
             self.generate_go_annotations(f"data/{prot_name}_mf_saliency_maps.json", cmap, str(full_record.seq))
         else:
             print("GO annotations from previous session found in 'data' directory.")
-
         go_data = json.loads("".join(open(f"data/{prot_name}_mf_saliency_maps.json", mode='r').readlines()))
         self.go_ids = go_data["query_prot"]["GO_ids"]
         self.go_names = go_data["query_prot"]["GO_names"]
@@ -189,7 +188,7 @@ class Protein:
             for residue in self.residues:
                 residue.go_map[annotation] = go_data["query_prot"]["saliency_maps"][i][
                     residue.seq_index - seq_index_offset]
-
+        print("GO annotations collected.")
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
