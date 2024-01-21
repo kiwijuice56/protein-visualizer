@@ -18,6 +18,8 @@ class UserInterface:
         self.hl_idx = -1
         self.stored_hl_idx = -1
 
+        self.go_idx = 0
+
         self.res_doc = pyglet.text.document.FormattedDocument()
         self.res_layout = None
 
@@ -29,6 +31,28 @@ class UserInterface:
         if symbol == pyglet.window.key.DOWN:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size - 1)
 
+        if symbol == pyglet.window.key.RIGHT:
+            self.go_idx += 1
+            self.go_idx = self.go_idx % len(self.protein.go_ids)
+            self.protein.current_go_id = self.protein.go_ids[self.go_idx]
+
+            self.protein.update_colors(self.protein.GO_ANNOTATION)
+            self.pdb_renderer.update_colors()
+            self.pdb_renderer.update_colors()
+
+            print(f"Viewing {self.protein.go_names[self.go_idx]}.")
+
+        if symbol == pyglet.window.key.LEFT:
+            self.go_idx -= 1
+            self.go_idx = self.go_idx % len(self.protein.go_ids)
+            self.protein.current_go_id = self.protein.go_ids[self.go_idx]
+
+            self.protein.update_colors(self.protein.GO_ANNOTATION)
+            self.pdb_renderer.update_colors()
+            self.pdb_renderer.update_colors()
+
+            print(f"Viewing {self.protein.go_names[self.go_idx]}.")
+
         if symbol == pyglet.window.key._1:
             self.protein.update_colors(self.protein.CLUSTER_INDEX)
             self.pdb_renderer.update_colors()
@@ -39,6 +63,10 @@ class UserInterface:
             self.pdb_renderer.update_colors()
         if symbol == pyglet.window.key._3:
             self.protein.update_colors(self.protein.ATOM_TYPE)
+            self.pdb_renderer.update_colors()
+            self.pdb_renderer.update_colors()
+        if symbol == pyglet.window.key._4:
+            self.protein.update_colors(self.protein.GO_ANNOTATION)
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
 
