@@ -205,6 +205,7 @@ class Predictor(object):
 
         self.pdb2cam = {}
         for i, go_indx in enumerate(self.goidx2chains):
+            print(f"Prediction {i + 1} processing.")
             pred_chains = list(self.goidx2chains[go_indx])
             for chain in pred_chains:
                 if chain not in self.pdb2cam:

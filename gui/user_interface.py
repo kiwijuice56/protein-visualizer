@@ -40,8 +40,6 @@ class UserInterface:
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
 
-            print(f"Viewing {self.protein.go_names[self.go_idx]}.")
-
         if symbol == pyglet.window.key.LEFT:
             self.go_idx -= 1
             self.go_idx = self.go_idx % len(self.protein.go_ids)
@@ -50,8 +48,6 @@ class UserInterface:
             self.protein.update_colors(self.protein.GO_ANNOTATION)
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
-
-            print(f"Viewing {self.protein.go_names[self.go_idx]}.")
 
         if symbol == pyglet.window.key._1:
             self.protein.update_colors(self.protein.CLUSTER_INDEX)
@@ -129,7 +125,7 @@ class UserInterface:
                 adj = len(self.protein.residues) + adj
             if adj >= len(self.protein.residues):
                 adj -= len(self.protein.residues)
-            snippet = f"{'%-8d' % self.protein.residues[adj].seq_index}"
+            snippet = f"{'%-8d' % self.protein.residues[adj].index}"
             color = tuple((255, 230, 0, 255) if i == 0 and not self.hl_idx == -1 else [255, 255, 255, 255])
             text_style["color"] = color
             text_style["font_size"] = 8
@@ -159,11 +155,15 @@ class UserInterface:
         glEnable(GL_BLEND)
         glOrtho(0, self.window.width, -self.window.height, 0, 0, 1000)
 
-        fps_doc = pyglet.text.Label(text=f"fps: {round(pyglet.clock.get_fps())}",
-                                    font_name="Consolas",
-                                    font_size=16,
-                                    x=16, y=-16,
-                                    anchor_x="left", anchor_y="top")
+        go_doc = pyglet.text.Label(
+            text=f"{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
+            font_name="Consolas",
+            font_size=16,
+            x=16, y=-16,
+            multiline=True,
+            width=self.window.width,
+            anchor_x="left", anchor_y="top")
+
         if self.res_layout:
             self.res_layout.draw()
-        fps_doc.draw()
+        go_doc.draw()
