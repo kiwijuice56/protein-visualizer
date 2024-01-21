@@ -16,6 +16,8 @@ from prose import fasta
 from prose.alphabets import Uniprot21
 from prose.models.multitask import ProSEMT
 
+from deepfrier.Predictor import Predictor
+
 
 # Wrapper class for single atoms
 class Atom:
@@ -121,6 +123,7 @@ class Protein:
 
         # Parse the PDB structure data
         self.residues = []
+        self.full_residues = [None] * len(full_record.seq)
         self.atoms = []
 
         # Find the first sequence index as an offset for later on
@@ -139,6 +142,7 @@ class Protein:
             for bio_atom in bio_residue.get_atoms():
                 residue_atoms.append(Atom(bio_atom, residue, atom_index))
                 atom_index += 1
+            self.full_residues[residue.seq_index - seq_index_offset] = residue
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
 
@@ -169,12 +173,15 @@ class Protein:
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
         print("Embedding calculations complete.")
 
-        if not os.path.isfile(f"data/{prot_name}_EC_saliency_maps.json"):
+        # Calculate GO annotations
+        if not os.path.isfile(f"data/{prot_name}_mf_saliency_maps.json"):
             print("GO annotation predictions not found in 'data' directory. Generating new annotations.")
+            cmap = self.calculate_cmap(self.full_residues)
+            self.generate_go_annotations(f"data/{prot_name}_mf_saliency_maps.json", cmap, str(full_record.seq))
         else:
             print("GO annotations from previous session found in 'data' directory.")
 
-        go_data = json.loads("".join(open(f"data/{prot_name}_EC_saliency_maps.json", mode='r').readlines()))
+        go_data = json.loads("".join(open(f"data/{prot_name}_mf_saliency_maps.json", mode='r').readlines()))
         self.go_ids = go_data["query_prot"]["GO_ids"]
         self.go_names = go_data["query_prot"]["GO_names"]
         self.current_go_id = self.go_ids[0]
@@ -203,23 +210,52 @@ class Protein:
         Colors the given residue (of this protein) using the color settings
         @param residue: A residue of this protein.
         """
+
+        def get_color(x, luminance=0.5, highlight=False):
+            """
+            Internal function to retrieve a color from the current palette
+            @param luminance: Optional brightness
+            @param x: [0, 1], different context depending on the current color mode
+            @param highlight: Whether this residue is currently highlighted
+            @return: An RGB array.
+            """
+
+            def get_color_from_palette(palette):
+                step = 1.0 / len(palette)
+                i = int(x * len(palette))
+                x_i, x_j = step * i, step * (i + 1)
+                z = (x - x_i) / (x_j - x_i)
+                a, b = palette[i % len(palette)], palette[(i + 1) % len(palette)]
+                return [(b[j] * z + a[j] * (1.0 - z)) / 255.0 for j in range(3)]
+
+            new_color = colour.Color(hue=0, saturation=0.0, luminance=0.0)
+            if x >= 0:
+                match self.color_palette:
+                    case self.RAINBOW:
+                        new_color = colour.Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
+                    case self.POISSON:
+                        new_color.rgb = get_color_from_palette(self.poisson_palette)
+            if highlight:
+                new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.25))
+            return [int(b * 255) for b in new_color.rgb]
+
         match self.color_mode:
             case self.RESIDUE_INDEX:
-                color = self.get_color(residue.index / len(self.residues), highlight=residue.highlighted)
+                color = get_color(residue.index / len(self.residues), highlight=residue.highlighted)
 
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
             case self.CLUSTER_INDEX:
-                color = self.get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                       highlight=residue.highlighted)
+                color = get_color(self.cluster_index[residue.index] / self.cluster_count,
+                                  highlight=residue.highlighted)
 
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
             case self.ATOM_TYPE:
-                residue.color = self.get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                               highlight=residue.highlighted)
+                residue.color = get_color(self.cluster_index[residue.index] / self.cluster_count,
+                                          highlight=residue.highlighted)
                 for atom in residue.atoms:
                     atom.color = self.cpk_colors[atom.bio_atom.get_id()[0]]
                     if residue.highlighted:
@@ -227,45 +263,12 @@ class Protein:
             case self.GO_ANNOTATION:
                 lum = residue.go_map[self.current_go_id]
                 lum = 0.75 * lum
-                color = self.get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                       luminance=lum, highlight=residue.highlighted)
+                color = get_color(self.cluster_index[residue.index] / self.cluster_count,
+                                  luminance=lum, highlight=residue.highlighted)
 
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
-
-    def get_color(self, x, luminance=0.5, highlight=False):
-        """
-        Internal function to retrieve a color from the current palette
-        @param luminance: Optional brightness
-        @param x: [0, 1], different context depending on the current color mode
-        @param highlight: Whether this residue is currently highlighted
-        @return: An RGB array.
-        """
-
-        def to_rgb(c):
-            return [int(b * 255) for b in c.rgb]
-
-        def get_color_from_palette(palette):
-            step = 1.0 / len(palette)
-            i = int(x * len(palette))
-            x_i, x_j = step * i, step * (i + 1)
-            z = (x - x_i) / (x_j - x_i)
-            a, b = palette[i % len(palette)], palette[(i + 1) % len(palette)]
-            return [(b[j] * z + a[j] * (1.0 - z)) / 255.0 for j in range(3)]
-
-        color = colour.Color(hue=0, saturation=0.0, luminance=0.0)
-
-        if x >= 0:
-            match self.color_palette:
-                case self.RAINBOW:
-                    color = colour.Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
-                case self.POISSON:
-                    color.rgb = get_color_from_palette(self.poisson_palette)
-
-        if highlight:
-            color.set_luminance(min(1.0, color.get_luminance() + 0.25))
-        return to_rgb(color)
 
     # Taken from https://github.com/tbepler/prose
     @staticmethod
@@ -303,5 +306,41 @@ class Protein:
             for name, sequence in fasta.parse_stream(f):
                 pid = name.decode('utf-8')
                 z = embed_sequence(sequence)
-                # Write as hdf5 dataset
                 h5.create_dataset(pid, data=z)
+
+    @staticmethod
+    def generate_go_annotations(output_path, seq, cmap):
+        with open('saved_models/model_config.json') as json_file:
+            params = json.load(json_file)
+
+        params = params['gcn']
+        gcn = params['gcn']
+        layer_name = params['layer_name']
+        models = params['models']
+
+        predictor = Predictor(models['mf'], gcn=gcn)
+        predictor.predict(cmap, seq)
+
+        predictor.compute_GradCAM(layer_name=layer_name, use_guided_grads=True)
+        predictor.save_GradCAM(output_path)
+
+    # https://warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/protein_contact_map/
+    @staticmethod
+    def calculate_cmap(residues):
+        def calc_residue_dist(a1, a2):
+            diff_vector = a1["CA"].coord - a2["CA"].coord
+            return np.sqrt(np.sum(diff_vector * diff_vector))
+
+        answer = np.zeros((len(residues), len(residues)), float)
+        missing_idx = []
+        for row, r1 in enumerate(residues):
+            for col, r2 in enumerate(residues):
+                if r1 is None or r2 is None:
+                    missing_idx.append((row, col))
+                    continue
+                b1, b2 = r1.bio_residue, r2.bio_residue
+                if b1["CA"] is None or b2["CA"] is None:
+                    missing_idx.append((row, col))
+                    continue
+                answer[row, col] = calc_residue_dist(b1, b2)
+        return answer

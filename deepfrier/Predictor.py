@@ -69,34 +69,16 @@ class Predictor(object):
         self.goterms = np.asarray(metadata['goterms'])
         self.thresh = 0.1*np.ones(len(self.goterms))
 
-    def _load_cmap(self, filename, cmap_thresh=10.0):
-        if filename.endswith('.pdb'):
-            D, seq = load_predicted_PDB(filename)
-            A = np.double(D < cmap_thresh)
-        elif filename.endswith('.npz'):
-            cmap = np.load(filename)
-            if 'C_alpha' not in cmap:
-                raise ValueError("C_alpha not in *.npz dict.")
-            D = cmap['C_alpha']
-            A = np.double(D < cmap_thresh)
-            seq = str(cmap['seqres'])
-        elif filename.endswith('.pdb.gz'):
-            rnd_fn = "".join([secrets.token_hex(10), '.pdb'])
-            with gzip.open(filename, 'rb') as f, open(rnd_fn, 'w') as out:
-                out.write(f.read().decode())
-            D, seq = load_predicted_PDB(rnd_fn)
-            A = np.double(D < cmap_thresh)
-            os.remove(rnd_fn)
-        else:
-            raise ValueError("File must be given in *.npz or *.pdb format.")
-        # ##
+    def _load_cmap(self, seq, cmap, cmap_thresh=10.0):
+        D = cmap
+        A = np.double(D < cmap_thresh)
         S = seq2onehot(seq)
         S = S.reshape(1, *S.shape)
         A = A.reshape(1, *A.shape)
 
         return A, S, seq
 
-    def predict(self, test_prot, cmap_thresh=10.0, chain='query_prot'):
+    def predict(self, cmap, seq, cmap_thresh=10.0, chain='query_prot'):
         print ("### Computing predictions on a single protein...")
         self.Y_hat = np.zeros((1, len(self.goterms)), dtype=float)
         self.goidx2chains = {}
@@ -104,7 +86,7 @@ class Predictor(object):
         self.data = {}
         self.test_prot_list = [chain]
         if self.gcn:
-            A, S, seqres = self._load_cmap(test_prot, cmap_thresh=cmap_thresh)
+            A, S, seqres = self._load_cmap(cmap, seq, cmap_thresh=cmap_thresh)
 
             y = self.model([A, S], training=False).numpy()[:, :, 0].reshape(-1)
             self.Y_hat[0] = y
@@ -117,12 +99,12 @@ class Predictor(object):
                 self.goidx2chains[idx].add(chain)
                 self.prot2goterms[chain].append((self.goterms[idx], self.gonames[idx], float(y[idx])))
         else:
-            S = seq2onehot(str(test_prot))
+            S = seq2onehot(str(cmap))
             S = S.reshape(1, *S.shape)
             y = self.model(S, training=False).numpy()[:, :, 0].reshape(-1)
             self.Y_hat[0] = y
             self.prot2goterms[chain] = []
-            self.data[chain] = [[S], test_prot]
+            self.data[chain] = [[S], cmap]
             go_idx = np.where((y >= self.thresh) == True)[0]
             for idx in go_idx:
                 if idx not in self.goidx2chains:
