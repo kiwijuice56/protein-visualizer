@@ -42,12 +42,14 @@
                 <li><code>Left Mouse</code>: Translate the camera and navigate the embedding space.</li>
                 <li><code>Right/Middle Mouse</code>: Rotate the camera.</li>
                 <li><code>Up/Down Arrow</code>: Increase/decrease atom point size.</li>
-                <li><code>1/2/3</code>: Switch between color modes.
+                <li><code>Left/Right Arrow</code>: Switch between GO annotations.</li>
+                <li><code>1/2/3/4</code>: Switch between color modes.
                     <ul>
                         <li><code>CLUSTER_INDEX</code>: (Default) Colors residues by what cluster they belong to
                             in the embedding space. Shows similarity between amino acids.</li>
                         <li><code>RESIDUE_INDEX</code>: Colors residues by their placement in the amino acid sequence.</li>
                         <li><code>ATOM_TYPE</code>: Colors residues by their atoms in the CPK color scheme. Overrides color palette setting.</li>
+                        <li><code>GO_ANNOTATION</code>: The same as <code>CLUSTER_INDEX</code>, but also changes brightness for each residue according to how much it contributed to the prediction of the currently selected GO annotation.</li>
                     </ul>
                 </li>
                 <li><code>8/9</code>: Switch between color palettes.
@@ -70,10 +72,16 @@
                     <a href="https://ericalfaro.dev/">Eric Alfaro</a>: Primary program developer as part of an MIT UROP project under the guidance of Dr. Manolis Kellis and Dr. Tianlong Chen.
                 </li>
                 <li>
-                    <a href="https://github.com/tbepler/prose/">Protein Sequence Embeddings (ProSE)</a>: Amino acid embedding code and pre-trained models.
+                    <p><a href="https://github.com/tbepler/prose/">Protein Sequence Embeddings (ProSE)</a>: Amino acid embedding code and pre-trained models.</p>
                     <ul>
                         <li>Bepler, T., Berger, B. Learning the protein language: evolution, structure, and function. Cell Systems 12, 6 (2021). https://doi.org/10.1016/j.cels.2021.05.017</li>
                         <li>Bepler, T., Berger, B. Learning protein sequence embeddings using information from structure. International Conference on Learning Representations (2019). https://openreview.net/pdf?id=SygLehCqtm</li>
+                    </ul>
+                </li>
+                <li>
+                    <p><a href="https://github.com/flatironinstitute/DeepFRI">Deep Functional Residue Identification (DeepFRI)</a>: GO annotation prediction code and pre-trained models.</p>
+                    <ul>
+                        <li>Gligorijevic, Vladimir and Renfrew, P. Douglas and Kosciolek, Tomasz and Leman, Julia Koehler and Cho, Kyunghyun and Vatanen, Tommi and Berenberg, Daniel and Taylor, Bryn and Fisk, Ian M. and Xavier, Ramnik J. and Knight, Rob and Bonneau, Richard. Structure-based function prediction using graph convolutional networks. Cold Spring Harbor Laboratory (2019). https://doi.org/10.1101/786236.</li>
                     </ul>
                 </li>
             </ul>

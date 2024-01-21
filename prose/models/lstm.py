@@ -1,11 +1,10 @@
-from __future__ import print_function,division
+from __future__ import print_function, division
 
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import PackedSequence
 
 import os
-from prose.utils import get_project_root
 
 
 class SkipLSTM(nn.Module):
@@ -23,13 +22,13 @@ class SkipLSTM(nn.Module):
             f = nn.LSTM(dim, hidden_dim, 1, batch_first=True, bidirectional=bidirectional)
             self.layers.append(f)
             if bidirectional:
-                dim = 2*hidden_dim
+                dim = 2 * hidden_dim
             else:
                 dim = hidden_dim
 
-        n = hidden_dim*num_layers + nin
+        n = hidden_dim * num_layers + nin
         if bidirectional:
-            n = 2*hidden_dim*num_layers + nin
+            n = 2 * hidden_dim * num_layers + nin
 
         self.proj = nn.Linear(n, nout)
 
@@ -55,10 +54,10 @@ class SkipLSTM(nn.Module):
 
     def transform(self, x):
         one_hot = self.to_one_hot(x)
-        hs =  [one_hot] # []
+        hs = [one_hot]  # []
         h_ = one_hot
         for f in self.layers:
-            h,_ = f(h_)
+            h, _ = f(h_)
             hs.append(h)
             h_ = h
         if type(x) is PackedSequence:
@@ -74,7 +73,7 @@ class SkipLSTM(nn.Module):
         h_ = one_hot
 
         for f in self.layers:
-            h,_ = f(h_)
+            h, _ = f(h_)
             hs.append(h)
             h_ = h
 
@@ -84,7 +83,7 @@ class SkipLSTM(nn.Module):
             z = PackedSequence(z, x.batch_sizes)
         else:
             h = torch.cat([z for z in hs], 2)
-            z = self.proj(h.view(-1,h.size(2)))
+            z = self.proj(h.view(-1, h.size(2)))
             z = z.view(x.size(0), x.size(1), -1)
 
         return z

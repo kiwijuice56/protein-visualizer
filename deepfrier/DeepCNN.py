@@ -5,11 +5,13 @@ from .utils import get_batched_dataset
 from .layers import FuncPredictor
 
 import matplotlib.pyplot as plt
+
 plt.switch_backend('agg')
 
 
 class DeepCNN(object):
-    """ Class containig the CNN model for predicting protein function. """
+    """ Class containing the CNN model for predicting protein function. """
+
     def __init__(self, output_dim, n_channels=26, num_filters=[100], filter_lens=[3], lr=0.0002, drop=0.3, l2_reg=0.001,
                  lm_model_name=None, model_name_prefix=None):
         """ Initialize the model
@@ -37,7 +39,7 @@ class DeepCNN(object):
         self._build_model(num_filters, filter_lens, n_channels, output_dim, lr, drop, l2_reg, lm_model=lm_model)
 
     def _build_model(self, num_filters, filter_lens, n_channels, output_dim, lr, drop, l2_reg, lm_model=None):
-        print ("### Compiling DeepCNN model...")
+        print("### Compiling DeepCNN model...")
 
         input_seq = tf.keras.layers.Input(shape=(None, n_channels), name='seq')
 
@@ -63,7 +65,7 @@ class DeepCNN(object):
 
         # 1-d features
         x = tf.keras.layers.GlobalMaxPooling1D()(x)
-        x = tf.keras.layers.Dropout(2*drop)(x)
+        x = tf.keras.layers.Dropout(2 * drop)(x)
 
         # Output layer
         output_layer = FuncPredictor(output_dim=output_dim, name='labels')(x)
@@ -72,13 +74,14 @@ class DeepCNN(object):
         optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=0.95, beta_2=0.99)
         pred_loss = tf.keras.losses.CategoricalCrossentropy()
         self.model.compile(optimizer=optimizer, loss=pred_loss, metrics=['acc'])
-        print (self.model.summary())
+        print(self.model.summary())
 
-    def train(self, train_tfrecord_fn, valid_tfrecord_fn, epochs=100, batch_size=64, pad_len=1000, ont='mf', class_weight=None):
+    def train(self, train_tfrecord_fn, valid_tfrecord_fn, epochs=100, batch_size=64, pad_len=1000, ont='mf',
+              class_weight=None):
         n_train_records = sum(1 for f in glob.glob(train_tfrecord_fn) for _ in tf.data.TFRecordDataset(f))
         n_valid_records = sum(1 for f in glob.glob(valid_tfrecord_fn) for _ in tf.data.TFRecordDataset(f))
-        print ("### Training on: ", n_train_records, "contact maps.")
-        print ("### Validating on: ", n_valid_records, "contact maps.")
+        print("### Training on: ", n_train_records, "contact maps.")
+        print("### Validating on: ", n_valid_records, "contact maps.")
 
         # train tfrecords
         batch_train = get_batched_dataset(train_tfrecord_fn,
@@ -102,7 +105,8 @@ class DeepCNN(object):
         es = tf.keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=5)
 
         # model checkpoint
-        mc = tf.keras.callbacks.ModelCheckpoint(self.model_name_prefix + '_best_train_model.h5', monitor='val_loss', mode='min', verbose=2,
+        mc = tf.keras.callbacks.ModelCheckpoint(self.model_name_prefix + '_best_train_model.h5', monitor='val_loss',
+                                                mode='min', verbose=2,
                                                 save_best_only=True, save_weights_only=True)
 
         # fit model
@@ -110,8 +114,8 @@ class DeepCNN(object):
                                  epochs=epochs,
                                  validation_data=batch_valid,
                                  class_weight=class_weight,
-                                 steps_per_epoch=n_train_records//batch_size,
-                                 validation_steps=n_valid_records//batch_size,
+                                 steps_per_epoch=n_train_records // batch_size,
+                                 validation_steps=n_valid_records // batch_size,
                                  callbacks=[es, mc])
 
         self.history = history.history
