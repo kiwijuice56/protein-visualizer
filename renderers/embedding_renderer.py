@@ -8,7 +8,7 @@ from gui.input_handler import InputHandler
 class Camera2D(object):
     ZOOM_RANGE = (0.01, 8)
 
-    def __init__(self, window, movement_speed=0.003, mouse_sensitivity=1.0, scroll_sensitivity=0.07):
+    def __init__(self, window, movement_speed=0.003, mouse_sensitivity=0.5, scroll_sensitivity=0.07):
         self.pos = np.zeros(2)
         self.scale = 1
 

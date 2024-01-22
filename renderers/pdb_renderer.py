@@ -9,7 +9,7 @@ class Camera3D(object):
     ZOOM_RANGE = (0.01, 512)
     VERTICAL_ROTATION_LIMIT = 0.1
 
-    def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.01, scroll_sensitivity=0.1):
+    def __init__(self, window, movement_speed=0.45, mouse_sensitivity=0.003, scroll_sensitivity=0.1):
         """
         @param window: Reference to the parent pyglet.window.Window
         @param movement_speed: Translation speed

@@ -1,19 +1,17 @@
-import os
-import warnings
+from os.path import isfile
+from warnings import filterwarnings
+from json import load
 
-import Bio.PDB
-import Bio.SeqRecord
-import colour
-import json
+from colour import Color
 import numpy as np
-import torch
-from Bio import SeqIO
+from torch import from_numpy, no_grad
+from Bio.SeqIO import parse
+from Bio.PDB import PDBParser
 from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
 
 from deep_learning.prose.alphabets import Uniprot21
 from deep_learning.prose.models.multitask import ProSEMT
-
 from deep_learning.deepfrier.Predictor import Predictor
 
 
@@ -74,8 +72,9 @@ class Protein:
                        (111, 52, 45), (68, 39, 31)]
 
     cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
-                  "P": (235, 145, 56),
-                  "_": (255, 255, 255)}
+                  "P": (235, 145, 56), "_": (255, 255, 255)}
+    output_color = "\033[96m"
+    output_color2 = "\033[94m"
 
     def __init__(self, pdb_path, chain_id=None, verbose=False):
         """
@@ -87,12 +86,12 @@ class Protein:
         self.color_palette = self.RAINBOW
 
         if not verbose:
-            warnings.filterwarnings("ignore")
+            filterwarnings("ignore")
 
-        print("Loading protein structure.")
+        print(self.output_color + "Loading protein structure.")
 
         # Get the full 3D structure from the PDB file
-        bio_structure = Bio.PDB.PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
+        bio_structure = PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
 
         # Parse the protein name from the file name
         protein_name = "".join(x for x in pdb_path[pdb_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
@@ -109,11 +108,11 @@ class Protein:
                 chain = other_chain
                 break
 
-        print(f"Rendering chain with ID '{chain_id}' from {[chain.get_id() for chain in chains]}")
+        print(self.output_color + f"Rendering chain with ID '{chain_id}' from {[chain.get_id() for chain in chains]}")
 
         # Parse the .pdb file for the protein sequence
         physical_record = None
-        for other_record in [r for r in SeqIO.parse(pdb_path, "pdb-atom")]:
+        for other_record in [r for r in parse(pdb_path, "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
         self.sequence = ''.join([r for r in str(physical_record.seq) if r not in "-*X"])
@@ -139,29 +138,29 @@ class Protein:
             self.atoms.extend(residue_atoms)
 
         # Calculate embeddings with ProSE
-        if not os.path.isfile(f"data/{protein_name}_embeddings.json"):
-            print("Embeddings not found in 'data' directory. Generating new embeddings.")
+        if not isfile(f"data/{protein_name}_embeddings.json"):
+            print(self.output_color2 + "Embeddings not found in 'data' directory. Generating new embeddings.")
             self.generate_embeddings(self.sequence, f"data/{protein_name}_embeddings.json")
         else:
-            print("Embeddings from previous session found in 'data' directory.")
+            print(self.output_color + "Embeddings from previous session found in 'data' directory.")
 
         with open(f"data/{protein_name}_embeddings.json", 'r') as f:
-            data = json.load(f)
+            data = load(f)
             self.embedding_points = data["embedding_points"]
             self.cluster_index = data["cluster_indices"]
 
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
 
         # Calculate GO annotations
-        if not os.path.isfile(f"data/{protein_name}_go_terms.json"):
-            print("GO annotation predictions not found in 'data' directory. Generating new annotations.")
+        if not isfile(f"data/{protein_name}_go_terms.json"):
+            print(self.output_color2 + "GO annotation predictions not found in 'data' directory. Generating new annotations.")
             contact_map = self.generate_contact_map(self.residues)
             self.generate_go_annotations(self.sequence, contact_map, f"data/{protein_name}_go_terms.json")
         else:
-            print("GO annotations from previous session found in 'data' directory.")
+            print(self.output_color + "GO annotations from previous session found in 'data' directory.")
 
         with open(f"data/{protein_name}_go_terms.json", mode='r') as f:
-            data = json.loads("".join(f.readlines()))["query_prot"]
+            data = load(f)["query_prot"]
             self.go_ids = data["GO_ids"]
             self.go_names = data["GO_names"]
             self.scores = data["confidence"]
@@ -172,7 +171,7 @@ class Protein:
                 for residue in self.residues:
                     residue.go_map[annotation] = data["saliency_maps"][i][residue.index]
 
-        print("All calculations complete. Preparing to render.")
+        print(self.output_color + "All calculations complete. Preparing to render.")
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
@@ -212,11 +211,11 @@ class Protein:
                 a, b = palette[i % len(palette)], palette[(i + 1) % len(palette)]
                 return [(b[j] * z + a[j] * (1.0 - z)) / 255.0 for j in range(3)]
 
-            new_color = colour.Color(hue=0, saturation=0.0, luminance=0.0)
+            new_color = Color(hue=0, saturation=0.0, luminance=0.0)
             if x >= 0:
                 match self.color_palette:
                     case self.RAINBOW:
-                        new_color = colour.Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
+                        new_color = Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
                     case self.POISSON:
                         new_color.rgb = get_color_from_palette(self.poisson_palette)
             if highlight:
@@ -272,10 +271,10 @@ class Protein:
 
             # Convert to alphabet index
             x = alphabet.encode(x)
-            x = torch.from_numpy(x)
+            x = from_numpy(x)
 
             # Embed the sequence
-            with torch.no_grad():
+            with no_grad():
                 x = x.long().unsqueeze(0)
                 y = model.transform(x)
                 y = y.squeeze()
@@ -309,7 +308,7 @@ class Protein:
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
         """
         with open("saved_models/model_config.json") as f:
-            params = json.load(f)
+            params = load(f)
 
         params = params["gcn"]
         gcn = params["gcn"]
