@@ -4,15 +4,6 @@ from json import load
 
 from colour import Color
 import numpy as np
-from torch import from_numpy, no_grad
-from Bio.SeqIO import parse
-from Bio.PDB import PDBParser
-from sklearn.cluster import DBSCAN
-from sklearn.manifold import TSNE
-
-from deep_learning.prose.alphabets import Uniprot21
-from deep_learning.prose.models.multitask import ProSEMT
-from deep_learning.deepfrier.Predictor import Predictor
 
 
 # Wrapper class for single atoms
@@ -91,6 +82,7 @@ class Protein:
         print(self.output_color + "Loading protein structure.")
 
         # Get the full 3D structure from the PDB file
+        from Bio.PDB import PDBParser
         bio_structure = PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
 
         # Parse the protein name from the file name
@@ -112,6 +104,7 @@ class Protein:
 
         # Parse the .pdb file for the protein sequence
         physical_record = None
+        from Bio.SeqIO import parse
         for other_record in [r for r in parse(pdb_path, "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
@@ -153,7 +146,8 @@ class Protein:
 
         # Calculate GO annotations
         if not isfile(f"data/{protein_name}_go_terms.json"):
-            print(self.output_color2 + "GO annotation predictions not found in 'data' directory. Generating new annotations.")
+            print(self.output_color2 + "GO annotation predictions not found in 'data' directory. Generating new "
+                                       "annotations.")
             contact_map = self.generate_contact_map(self.residues)
             self.generate_go_annotations(self.sequence, contact_map, f"data/{protein_name}_go_terms.json")
         else:
@@ -260,6 +254,13 @@ class Protein:
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
         @param output_path: The .json path to store embedding data in
         """
+        from torch import from_numpy, no_grad
+        from sklearn.cluster import DBSCAN
+        from sklearn.manifold import TSNE
+
+        from deep_learning.prose.alphabets import Uniprot21
+        from deep_learning.prose.models.multitask import ProSEMT
+
         def embed_sequence(x):
             if len(x) == 0:
                 n = model.embedding.proj.weight.size(1)
@@ -307,6 +308,8 @@ class Protein:
         @param contact_map: The NxN numpy matrix containing the distance between each residue
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
         """
+        from deep_learning.deepfrier.Predictor import Predictor
+
         with open("saved_models/model_config.json") as f:
             params = load(f)
 
