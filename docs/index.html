@@ -30,12 +30,27 @@
                 a protein. You can download proteins from
                 <a href="https://www.rcsb.org/">RCSB Protein Data Bank</a> to test out with this program.
             </p>
-            <p>Before viewing a certain protein chain, the program generates and stores embeddings in
-                <code>protein-visualizer-x.x/data/</code> for future use. Deleting the files in this folder
-                can be a possible fix to errors.
+            <p>Before viewing a protein, the program caches amino acid embeddings and Gene Ontology (GO) annotations in
+                <code>protein-visualizer-x.x/data/[protein_name]_data.json</code> to reduce load times the next time the
+                program is run with the selected protein.
             </p>
+            <p>If you wish to use the prediction data yourself, you can parse through this file.
+                The following information is stored as a dictionary for each protein:
+            </p>
+            <ul>
+                <li><code>GO_ids</code>: A list of predicted GO IDs.</li>
+                <li><code>GO_names</code>: A list of descriptions for each predicted GO ID.</li>
+                <li><code>confidence</code>: A number between 0 and 1 denoting the confidence of each GO prediction.</li>
+                <li><code>saliency_maps</code>: A matrix where each row contains numbers between 0 and 1 denoting how
+                    strongly an amino acid contributed to the prediction of that row's GO annotation.</li>
+                <li><code>sequence</code>: The protein's amino acid sequence in the FASTA format (without a header).</li>
+                <li><code>embedding_points</code>: A flattened list of (x, y) points denoting the coordinates of each
+                    amino acid in the latent space after being transformed into 2D.</li>
+                <li><code>cluster_indices</code>: A list of integers denoting which cluster each amino acid belongs to, with -1 meaning no cluster.</li>
+
+            </ul>
             <p> The <code>protein-visualizer-x.x/saved_models/</code> folder contains the pre-trained models created by
-            the ProSE team.</p>
+            the ProSE and DeepFRI teams.</p>
 
             <h2>Controls</h2>
             <ul>
