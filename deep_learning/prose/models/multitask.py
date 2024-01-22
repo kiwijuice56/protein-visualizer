@@ -115,12 +115,14 @@ def pad_gap_scores(s, gap):
 
 
 class L1(nn.Module):
-    def forward(self, x, y):
+    @staticmethod
+    def forward(x, y):
         return -torch.sum(torch.abs(x.unsqueeze(1) - y), -1)
 
 
 class L2(nn.Module):
-    def forward(self, x, y):
+    @staticmethod
+    def forward(x, y):
         return -torch.sum((x.unsqueeze(1) - y) ** 2, -1)
 
 

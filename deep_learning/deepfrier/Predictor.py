@@ -142,6 +142,3 @@ class Predictor(object):
                     gradcam.heatmap(self.data[chain][0], go_indx, use_guided_grads=use_guided_grads).tolist())
                 self.pdb2cam[chain]['confidence'].append(self.prot2goterms[[p for p in self.prot2goterms][0]][i][2])
 
-    def save_GradCAM(self, output_fn):
-        with open(output_fn, 'w') as fw:
-            json.dump(self.pdb2cam, fw, indent=1)

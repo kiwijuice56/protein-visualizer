@@ -1,6 +1,6 @@
 from os.path import isfile
 from warnings import filterwarnings
-from json import load
+from json import load, dump
 
 from colour import Color
 import numpy as np
@@ -53,9 +53,6 @@ class Protein:
     RAINBOW = 8
     POISSON = 9
 
-    # Maximum distance between residues of a single cluster within the embedding space
-    cluster_distance = 2.8
-
     poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
                        (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
@@ -65,7 +62,7 @@ class Protein:
     cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
                   "P": (235, 145, 56), "_": (255, 255, 255)}
     output_color = "\033[96m"
-    output_color2 = "\033[94m"
+    output_color2 = "\033[92m"
 
     def __init__(self, pdb_path, chain_id=None, verbose=False):
         """
@@ -130,31 +127,28 @@ class Protein:
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
 
-        # Calculate embeddings with ProSE
-        if not isfile(f"data/{protein_name}_embeddings.json"):
-            print(self.output_color2 + "Embeddings not found in 'data' directory. Generating new embeddings.")
-            self.generate_embeddings(self.sequence, f"data/{protein_name}_embeddings.json")
-        else:
-            print(self.output_color + "Embeddings from previous session found in 'data' directory.")
+        if not isfile(f"data/{protein_name}_data.json"):
+            print(self.output_color2 + "Cache for this protein not found in tje 'data' directory.")
+            print(self.output_color2 + "Generating embeddings.")
 
-        with open(f"data/{protein_name}_embeddings.json", 'r') as f:
+            data = self.generate_embeddings(self.sequence)
+
+            print(self.output_color2 + "Generating contact map.")
+            contact_map = self.generate_contact_map(self.residues)
+            print(self.output_color2 + "Generating GO annotations.")
+
+            data.update(self.generate_go_annotations(self.sequence, contact_map)["query_prot"])
+
+            with open(f"data/{protein_name}_data.json", 'w') as f:
+                dump(data, f, indent=1)
+        else:
+            print(self.output_color + "Cache for this protein was found in the 'data' directory.")
+
+        with open(f"data/{protein_name}_data.json", 'r') as f:
             data = load(f)
             self.embedding_points = data["embedding_points"]
             self.cluster_index = data["cluster_indices"]
-
-        self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
-
-        # Calculate GO annotations
-        if not isfile(f"data/{protein_name}_go_terms.json"):
-            print(self.output_color2 + "GO annotation predictions not found in 'data' directory. Generating new "
-                                       "annotations.")
-            contact_map = self.generate_contact_map(self.residues)
-            self.generate_go_annotations(self.sequence, contact_map, f"data/{protein_name}_go_terms.json")
-        else:
-            print(self.output_color + "GO annotations from previous session found in 'data' directory.")
-
-        with open(f"data/{protein_name}_go_terms.json", mode='r') as f:
-            data = load(f)["query_prot"]
+            self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
             self.go_ids = data["GO_ids"]
             self.go_names = data["GO_names"]
             self.scores = data["confidence"]
@@ -248,11 +242,12 @@ class Protein:
                 residue.color = color
 
     # Taken from https://github.com/tbepler/prose
-    def generate_embeddings(self, sequence, output_path):
+    @staticmethod
+    def generate_embeddings(sequence):
         """
         Use the ProSE model to generate embeddings
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
-        @param output_path: The .json path to store embedding data in
+        @return A dictionary with the embedding points and cluster indices
         """
         from torch import from_numpy, no_grad
         from sklearn.cluster import DBSCAN
@@ -290,23 +285,22 @@ class Protein:
 
         # Use the t-SNE algorithm to transform the embeddings into 2D vectors
         transform = TSNE(n_components=2, perplexity=30).fit_transform(np.array(generated_embeddings))
-        embedding_points = list(transform.flatten())
+        embedding_points = transform.flatten()
 
         # Use the DBSCAN algorithm to locate clusters in the embedding space
-        db = DBSCAN(eps=self.cluster_distance).fit(transform)
-        cluster_index = list(db.labels_)
+        db = DBSCAN(eps=2.8).fit(transform)
+        cluster_index = db.labels_
 
-        with open(output_path, 'w') as f:
-            data = str({"embedding_points": embedding_points, "cluster_indices": cluster_index})
-            f.write(''.join([(c if not c == "'" else "\"") for c in data]))
+        return {"embedding_points": [float(x) for x in embedding_points],
+                "cluster_indices": [int(x) for x in cluster_index]}
 
     @staticmethod
-    def generate_go_annotations(sequence, contact_map, output_path):
+    def generate_go_annotations(sequence, contact_map):
         """
         Use the DeepFRI model to generate GO annotations
-        @param output_path: The .json path to store GO data in
         @param contact_map: The NxN numpy matrix containing the distance between each residue
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
+        @return A dictionary with the predicted GO annotations, IDs, confidence levels, and saliency
         """
         from deep_learning.deepfrier.predictor import Predictor
 
@@ -322,7 +316,7 @@ class Protein:
         predictor.predict(contact_map, sequence)
 
         predictor.compute_GradCAM(layer_name=layer_name, use_guided_grads=False)
-        predictor.save_GradCAM(output_path)
+        return predictor.pdb2cam
 
     # https://warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/protein_contact_map/
     @staticmethod
