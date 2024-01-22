@@ -89,7 +89,7 @@ class PDBRenderer:
     Z_NEAR = 2
     Z_FAR = 800
 
-    def __init__(self, protein, window, bounding_box=None, point_size=8, outline=False):
+    def __init__(self, protein, window, bounding_box=None, point_size=8, outline=True):
         """
         @param protein: Reference to Protein object to render
         @param window: Reference to the parent pyglet.window.Window

@@ -6,8 +6,9 @@ build/*
 dist/*
 main.spec
 saved_models/*
-prose/__pycache__/*
-prose/models/__pycache__/*
+deep_learning/__pycache__/*
+deep_learning/prose/__pycache__/*
+deep_learning/prose/models/__pycache__/*
 gui/__pycache__/*
 renderers/__pycache__/*
-deepfrier/__pycache__/*
+deep_learning/deepfrier/__pycache__/*

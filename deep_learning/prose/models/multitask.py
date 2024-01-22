@@ -19,7 +19,7 @@ class ProSEMT(nn.Module):
         if path is None or path == 'prose_mt':
             path = os.path.join('saved_models', 'prose_mt_3x1024.sav')
 
-        from prose.models.lstm import SkipLSTM
+        from deep_learning.prose.models.lstm import SkipLSTM
         encoder = SkipLSTM(21, 21, 1024, 3)
         encoder.cloze = encoder.proj
 

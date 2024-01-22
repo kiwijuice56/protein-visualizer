@@ -4,7 +4,6 @@ import warnings
 import Bio.PDB
 import Bio.SeqRecord
 import colour
-import h5py
 import json
 import numpy as np
 import torch
@@ -12,29 +11,44 @@ from Bio import SeqIO
 from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
 
-from prose.alphabets import Uniprot21
-from prose.models.multitask import ProSEMT
+from deep_learning.prose.alphabets import Uniprot21
+from deep_learning.prose.models.multitask import ProSEMT
 
-from deepfrier.Predictor import Predictor
+from deep_learning.deepfrier.Predictor import Predictor
 
 
 # Wrapper class for single atoms
 class Atom:
     def __init__(self, bio_atom, residue, index):
+        """
+        @param bio_atom: A Bio.PDB.Atom object
+        @param residue: The Residue object that owns this atom
+        @param index: The index of this atom out of all atoms in the ordered protein sequence
+        """
         self.bio_atom = bio_atom
         self.residue = residue
         self.index = index
+
+        # Atom color is only used in ATOM_TYPE color mode
         self.color = [0, 0, 0]
 
 
 # Wrapper class for collections of atoms
 class Residue:
     def __init__(self, atoms, bio_residue, index):
+        """
+        @param atoms: A list of Atom objects that make up this residue
+        @param bio_residue: A Bio.PDB.Residue object
+        @param index: The index of this residue out of all residues in the ordered protein sequence
+        """
         self.atoms = atoms
         self.bio_residue = bio_residue
         self.index = index
+
         self.color = [0, 0, 0]
         self.highlighted = False
+
+        # A string [GO id] : float [0.0, 1.0] pair of how strongly this residue contributed to a certain GO prediction
         self.go_map = {}
 
 
@@ -50,6 +64,9 @@ class Protein:
     RAINBOW = 8
     POISSON = 9
 
+    # Maximum distance between residues of a single cluster within the embedding space
+    cluster_distance = 2.8
+
     poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
                        (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
@@ -60,30 +77,32 @@ class Protein:
                   "P": (235, 145, 56),
                   "_": (255, 255, 255)}
 
-    def __init__(self, pdb_path, chain_id=None, color_mode=CLUSTER_INDEX, color_palette=RAINBOW, cluster_distance=2.8):
+    def __init__(self, pdb_path, chain_id=None, verbose=False):
         """
         @param pdb_path: Filepath to .pdb file containing the protein structure
         @param chain_id: Which chain to load from the .pdb file. Defaults to first chain
-        @param color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE
-        @param color_palette: Options: Protein.RAINBOW, Protein.POISSON
-        @param cluster_distance: Maximum distance between nodes of a single cluster within the embedding space
+        @param verbose: Whether extraneous output such as internal warnings are printed
         """
-        self.color_mode = color_mode
-        self.color_palette = color_palette
+        self.color_mode = self.GO_ANNOTATION
+        self.color_palette = self.RAINBOW
 
-        warnings.filterwarnings("ignore")
+        if not verbose:
+            warnings.filterwarnings("ignore")
 
         print("Loading protein structure.")
 
         # Get the full 3D structure from the PDB file
-        bio_structure = Bio.PDB.PDBParser(QUIET=True).get_structure("struct", pdb_path)
+        bio_structure = Bio.PDB.PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
+
+        # Parse the protein name from the file name
+        protein_name = "".join(x for x in pdb_path[pdb_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
 
         # Choose default chain if none specified
         chains = [c for c in bio_structure.get_chains()]
         if chain_id is None:
             chain_id = chains[0].get_id()
 
-        # Retrieve the requested chain from the PDB file
+        # Retrieve the requested chain from the .pdb file
         chain = None
         for other_chain in chains:
             if other_chain.get_id() == chain_id:
@@ -92,26 +111,24 @@ class Protein:
 
         print(f"Rendering chain with ID '{chain_id}' from {[chain.get_id() for chain in chains]}")
 
+        # Parse the .pdb file for the protein sequence
         physical_record = None
         for other_record in [r for r in SeqIO.parse(pdb_path, "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
-
-        prot_name = "".join(x for x in pdb_path[pdb_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
-
-        # Parse the PDB structure data
-        self.residues = []
-        self.atoms = []
         self.sequence = ''.join([r for r in str(physical_record.seq) if r not in "-*X"])
 
-        # Find the first sequence index as an offset for later on
-        atom_index, seq_index_offset = 0, -1
+        # Parse the .pdb file for structure data
+        self.residues = []
+        self.atoms = []
+
+        atom_index = 0
         for i, bio_residue in enumerate(chain.get_residues()):
-            seq_index = bio_residue.get_id()[1]
+            true_index = bio_residue.get_id()[1]
             # Remove any residues not in range (often, these are water molecules)
-            if seq_index < physical_record.annotations["start"]:
+            if true_index < physical_record.annotations["start"]:
                 continue
-            if seq_index > physical_record.annotations["end"]:
+            if true_index > physical_record.annotations["end"]:
                 continue
             residue_atoms = []
             residue = Residue(residue_atoms, bio_residue, i)
@@ -122,53 +139,47 @@ class Protein:
             self.atoms.extend(residue_atoms)
 
         # Calculate embeddings with ProSE
-        if not os.path.isfile(f"data/{prot_name}_embeddings.h5"):
+        if not os.path.isfile(f"data/{protein_name}_embeddings.json"):
             print("Embeddings not found in 'data' directory. Generating new embeddings.")
-            self.generate_embeddings(f"data/{prot_name}_embeddings.h5", self.sequence)
+            self.generate_embeddings(self.sequence, f"data/{protein_name}_embeddings.json")
         else:
             print("Embeddings from previous session found in 'data' directory.")
 
-        # Parse the embeddings file for the residues we will render
-        embedding_file = h5py.File(f"data/{prot_name}_embeddings.h5", 'r')
-        embeddings = embedding_file[list(embedding_file.keys())[0]][()]
+        with open(f"data/{protein_name}_embeddings.json", 'r') as f:
+            data = json.load(f)
+            self.embedding_points = data["embedding_points"]
+            self.cluster_index = data["cluster_indices"]
 
-        print("Embeddings collected. Calculating 2D projection and clusters.")
-
-        # Use the t-SNE algorithm to transform the embeddings into 2D vectors
-        transform = TSNE(n_components=2, perplexity=30).fit_transform(np.array(embeddings))
-        self.embedding_points = transform.flatten()
-
-        # Calculate residue clusters
-        db = DBSCAN(eps=cluster_distance).fit(transform)
-        self.cluster_index = db.labels_
         self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
-        print("Embedding calculations complete.")
 
         # Calculate GO annotations
-        if not os.path.isfile(f"data/{prot_name}_mf_saliency_maps.json"):
+        if not os.path.isfile(f"data/{protein_name}_go_terms.json"):
             print("GO annotation predictions not found in 'data' directory. Generating new annotations.")
-
-            cmap = self.calculate_cmap(self.residues)
-
-            self.generate_go_annotations(f"data/{prot_name}_mf_saliency_maps.json", cmap, self.sequence)
+            contact_map = self.generate_contact_map(self.residues)
+            self.generate_go_annotations(self.sequence, contact_map, f"data/{protein_name}_go_terms.json")
         else:
             print("GO annotations from previous session found in 'data' directory.")
-        go_data = json.loads("".join(open(f"data/{prot_name}_mf_saliency_maps.json", mode='r').readlines()))
-        self.go_ids = go_data["query_prot"]["GO_ids"]
-        self.go_names = go_data["query_prot"]["GO_names"]
-        self.scores = go_data["query_prot"]["confidence"]
-        self.current_go_id = self.go_ids[0]
-        for i, annotation in enumerate(self.go_ids):
-            for residue in self.residues:
-                residue.go_map[annotation] = go_data["query_prot"]["saliency_maps"][i][residue.index]
-        print("GO annotations collected.")
-        print("All calculations completed. Preparing to render.")
+
+        with open(f"data/{protein_name}_go_terms.json", mode='r') as f:
+            data = json.loads("".join(f.readlines()))["query_prot"]
+            self.go_ids = data["GO_ids"]
+            self.go_names = data["GO_names"]
+            self.scores = data["confidence"]
+            self.current_go_id = self.go_ids[0]
+
+            # Assign saliency to each residue in the protein sequence
+            for i, annotation in enumerate(self.go_ids):
+                for residue in self.residues:
+                    residue.go_map[annotation] = data["saliency_maps"][i][residue.index]
+
+        print("All calculations complete. Preparing to render.")
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
         """
         Updates the color of the residues within this protein. Slow performance, do not call regularly
-        @param new_color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE
+        @param new_color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE,
+        Protein.GO_ANNOTATION
         @param new_color_palette: Options: Protein.RAINBOW, Protein.POISSON
         """
         if new_color_mode:
@@ -244,8 +255,12 @@ class Protein:
                 residue.color = color
 
     # Taken from https://github.com/tbepler/prose
-    @staticmethod
-    def generate_embeddings(output_path, seq):
+    def generate_embeddings(self, sequence, output_path):
+        """
+        Use the ProSE model to generate embeddings
+        @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
+        @param output_path: The .json path to store embedding data in
+        """
         def embed_sequence(x):
             if len(x) == 0:
                 n = model.embedding.proj.weight.size(1)
@@ -271,44 +286,58 @@ class Protein:
         model = ProSEMT.load_pretrained()
         model.eval()
 
-        # Parse the sequences and embed them
-        # Write them to hdf5 file
-        h5 = h5py.File(output_path, 'w')
-        h5.create_dataset("protein_name", data=embed_sequence(seq.encode('utf-8')))
+        generated_embeddings = embed_sequence(sequence.encode("utf-8"))
+
+        # Use the t-SNE algorithm to transform the embeddings into 2D vectors
+        transform = TSNE(n_components=2, perplexity=30).fit_transform(np.array(generated_embeddings))
+        embedding_points = list(transform.flatten())
+
+        # Use the DBSCAN algorithm to locate clusters in the embedding space
+        db = DBSCAN(eps=self.cluster_distance).fit(transform)
+        cluster_index = list(db.labels_)
+
+        with open(output_path, 'w') as f:
+            data = str({"embedding_points": embedding_points, "cluster_indices": cluster_index})
+            f.write(''.join([(c if not c == "'" else "\"") for c in data]))
 
     @staticmethod
-    def generate_go_annotations(output_path, seq, cmap):
-        with open('saved_models/model_config.json') as json_file:
-            params = json.load(json_file)
+    def generate_go_annotations(sequence, contact_map, output_path):
+        """
+        Use the DeepFRI model to generate GO annotations
+        @param output_path: The .json path to store GO data in
+        @param contact_map: The NxN numpy matrix containing the distance between each residue
+        @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
+        """
+        with open("saved_models/model_config.json") as f:
+            params = json.load(f)
 
-        params = params['gcn']
-        gcn = params['gcn']
-        layer_name = params['layer_name']
-        models = params['models']
+        params = params["gcn"]
+        gcn = params["gcn"]
+        layer_name = params["layer_name"]
+        models = params["models"]
 
         predictor = Predictor(models['mf'], gcn=gcn)
-        predictor.predict(cmap, seq)
+        predictor.predict(contact_map, sequence)
 
         predictor.compute_GradCAM(layer_name=layer_name, use_guided_grads=False)
         predictor.save_GradCAM(output_path)
 
     # https://warwick.ac.uk/fac/sci/moac/people/students/peter_cock/python/protein_contact_map/
     @staticmethod
-    def calculate_cmap(residues):
-        def calc_residue_dist(a1, a2):
-            if b1["CA"] is None or b2["CA"] is None:
-                diff_vector = a1.get_atom().coord - a2.get_atom().coord
-            else:
-                diff_vector = a1["CA"].coord - a2["CA"].coord
-            return np.sqrt(np.sum(diff_vector * diff_vector))
-
-        answer = np.full((len(residues), len(residues)), 0, float)
-        missing_idx = []
+    def generate_contact_map(residues):
+        """
+        Generate a C-Alpha contact map given a list of residues
+        @param residues: The list to create the contact map for
+        @return: An NxN numpy matrix of the distance between each residue
+        """
+        contact_map = np.full((len(residues), len(residues)), 0, float)
         for row in range(len(residues)):
             for col in range(row, len(residues)):
-                if residues[row] is None or residues[col] is None:
-                    missing_idx.append((row, col))
-                    continue
-                b1, b2 = residues[row].bio_residue, residues[col].bio_residue
-                answer[row, col] = answer[col, row] = calc_residue_dist(b1, b2)
-        return answer
+                bio_residue1, bio_residue2 = residues[row].bio_residue, residues[col].bio_residue
+                if bio_residue1['CA'] is None or bio_residue2['CA'] is None:
+                    diff_vector = bio_residue1.get_atom().coord - bio_residue2.get_atom().coord
+                else:
+                    diff_vector = bio_residue1['CA'].coord - bio_residue2['CA'].coord
+                distance = np.sqrt(np.sum(diff_vector * diff_vector))
+                contact_map[row, col] = contact_map[col, row] = distance
+        return contact_map

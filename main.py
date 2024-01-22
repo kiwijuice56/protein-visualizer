@@ -11,7 +11,6 @@ from tkinter import filedialog
 
 from ctypes import windll
 
-
 print("protein-visualizer version 1.0, documentation: https://kiwijuice56.github.io/protein-visualizer/")
 print("-" * 8)
 print("Select a .pdb file to render.")

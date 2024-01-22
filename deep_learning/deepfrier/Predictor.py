@@ -2,10 +2,9 @@ import os
 import csv
 import glob
 import json
-import gzip
-import secrets
 
 import numpy as np
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 
 from .utils import load_catalogue, load_FASTA, load_predicted_PDB, seq2onehot
@@ -85,7 +84,7 @@ class Predictor(object):
         self.data = {}
         self.test_prot_list = [chain]
         if self.gcn:
-            A, S, seqres = self._load_cmap(cmap, seq, cmap_thresh=cmap_thresh)
+            A, S, seqres = self._load_cmap(seq, cmap, cmap_thresh=cmap_thresh)
 
             y = self.model([A, S], training=False).numpy()[:, :, 0].reshape(-1)
             self.Y_hat[0] = y
