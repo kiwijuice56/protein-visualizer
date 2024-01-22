@@ -308,7 +308,7 @@ class Protein:
         @param contact_map: The NxN numpy matrix containing the distance between each residue
         @param sequence: The amino acid sequence (with FASTA amino acid names) as a string
         """
-        from deep_learning.deepfrier.Predictor import Predictor
+        from deep_learning.deepfrier.predictor import Predictor
 
         with open("saved_models/model_config.json") as f:
             params = load(f)

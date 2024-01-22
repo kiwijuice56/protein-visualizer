@@ -1,54 +1,10 @@
 import csv
-import glob
 import os
 
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 from sklearn.metrics import average_precision_score
-
-from Bio import SeqIO
-from Bio.PDB.PDBParser import PDBParser
-
-
-def load_predicted_PDB(pdbfile):
-    # Generate (diagonalized) C_alpha distance matrix from a pdbfile
-    parser = PDBParser()
-    structure = parser.get_structure(pdbfile.split('/')[-1].split('.')[0], pdbfile)
-    residues = [r for r in structure.get_residues()]
-
-    # sequence from atom lines
-    records = SeqIO.parse(pdbfile, 'pdb-atom')
-    seqs = [str(r.seq) for r in records]
-
-    distances = np.empty((len(residues), len(residues)))
-    for x in range(len(residues)):
-        for y in range(len(residues)):
-            one = None
-            if "CA" not in residues[x]:
-                one = [a for a in residues[x].get_atoms()][0].get_coord()
-            else:
-                one = residues[x]["CA"].get_coord()
-
-            two = None
-            if "CA" not in residues[y]:
-                two = [a for a in residues[y].get_atoms()][0].get_coord()
-            else:
-                two = residues[y]["CA"].get_coord()
-            distances[x, y] = np.linalg.norm(one-two)
-
-    return distances, seqs[0]
-
-
-def load_FASTA(filename):
-    # Loads fasta file and returns a list of the Bio SeqIO records
-    infile = open(filename, 'rU')
-    entries = []
-    proteins = []
-    for entry in SeqIO.parse(infile, 'fasta'):
-        entries.append(str(entry.seq))
-        proteins.append(str(entry.id))
-    return proteins, entries
 
 
 def load_GO_annot(filename):
@@ -216,55 +172,3 @@ def _parse_function_cnn(serialized, n_goterms, channels=26, ont='mf'):
     y = tf.reshape(y, shape=[n_goterms, 2])  # [batch, classes, Pos-Neg].
 
     return S, y
-
-
-def get_batched_dataset(filenames, batch_size=64, pad_len=1000, n_goterms=347, channels=26, gcn=True, cmap_type='ca', cmap_thresh=10.0, ont='mf'):
-    # settings to read from all the shards in parallel
-    AUTO = tf.data.experimental.AUTOTUNE
-    ignore_order = tf.data.Options()
-    ignore_order.experimental_deterministic = False
-
-    # list all files
-    filenames = tf.io.gfile.glob(filenames)
-    dataset = tf.data.TFRecordDataset(filenames, num_parallel_reads=AUTO)
-    dataset = dataset.with_options(ignore_order)
-
-    # Parse the serialized data in the TFRecords files.
-    if gcn:
-        dataset = dataset.map(lambda x: _parse_function_gcn(x, n_goterms=n_goterms, channels=channels, cmap_type=cmap_type, cmap_thresh=cmap_thresh, ont=ont))
-    else:
-        dataset = dataset.map(lambda x: _parse_function_cnn(x, n_goterms=n_goterms, channels=channels, ont=ont))
-
-    # Randomizes input using a window of 2000 elements (read into memory)
-    dataset = dataset.shuffle(buffer_size=2000 + 3*batch_size)
-    if gcn:
-        dataset = dataset.padded_batch(batch_size, padded_shapes=({'cmap': [pad_len, pad_len], 'seq': [pad_len, channels]}, [None, 2]))
-        # dataset = dataset.padded_batch(batch_size, padded_shapes=({'cmap': [pad_len, pad_len], 'seq': [pad_len, channels]}, [None]))
-    else:
-        dataset = dataset.padded_batch(batch_size, padded_shapes=([pad_len, channels], [None, 2]))
-    dataset = dataset.repeat()
-
-    return dataset
-
-
-def load_catalogue(fn='/mnt/home/dberenberg/ceph/SWISSMODEL_CONTACTMAPS/catalogue.csv'):
-    chain2path = {}
-    with open(fn) as tsvfile:
-        fRead = csv.reader(tsvfile, delimiter=',')
-        # next(fRead, None)
-        for line in fRead:
-            pdb_chain = line[0].strip()
-            path = line[1].strip()
-            chain2path[pdb_chain] = path
-    return chain2path
-
-
-if __name__ == "__main__":
-    # from layers import GraphConv
-    # gconv = GraphConv(output_dim=320, use_bias=False, activation='relu')
-    # from DeepFRI import DeepFRI
-    # model = DeepFRI(output_dim=489)
-
-    filenames = '/mnt/ceph/users/vgligorijevic/ContactMaps/TFRecords/PDB_GO_valid*'
-    n_records = sum(1 for f in glob.glob(filenames) for _ in tf.data.TFRecordDataset(f))
-    print ("### Total number of samples=", n_records)
