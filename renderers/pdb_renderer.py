@@ -80,7 +80,16 @@ class Camera3D(object):
 # Renders the 3D structure of a protein
 class PDBRenderer:
     GRID_LINE_COUNT = 16
-    BACKGROUND_COLOR = (98, 98, 98, 255)
+    BACKGROUND_COLOR = (0, 0, 0, 0)
+
+    SKY_COLOR1 = (191, 220, 227)
+    SKY_COLOR2 = (255, 255, 255)
+    GROUND_COLOR1 = (40, 50, 54)
+    GROUND_COLOR2 = (78, 93, 97)
+    SKY_DISTANCE = 1000.0
+    HORIZON_SIZE1 = 0.3
+    HORIZON_SIZE2 = 0.1
+
     X_AXIS_COLOR = (255, 56, 89, 98)
     Z_AXIS_COLOR = (56, 109, 255, 98)
     GRID_LINE_COLOR = (255, 255, 255, 32)
@@ -138,7 +147,7 @@ class PDBRenderer:
         self.outline_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
             ('v3f', point_coordinates),
-            ('c3B', np.full(len(self.protein.atoms) * 3, 32, dtype=np.byte)))
+            ('c3B', np.full(len(self.protein.atoms) * 3, 8, dtype=np.byte)))
 
         self.camera = Camera3D(window)
 
@@ -191,7 +200,6 @@ class PDBRenderer:
         glLoadIdentity()
         glMatrixMode(GL_PROJECTION)
         gluPerspective(self.FOV, self.window.width / float(self.window.height), self.Z_NEAR, self.Z_FAR)
-
         self.camera.draw()
 
         glScissor(*self.bounding_box)
@@ -212,6 +220,33 @@ class PDBRenderer:
         glClearColor(*[c / 255.0 for c in self.BACKGROUND_COLOR])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_LINE_SMOOTH)
+
+        glLoadIdentity()
+        glMatrixMode(GL_PROJECTION)
+        glDisable(GL_DEPTH_TEST)
+
+        x = -(self.camera.forward_dir[1]) * 2 + self.camera.pivot_pos[1] * 1.0 / self.SKY_DISTANCE
+
+        quad_list = pyglet.graphics.vertex_list(
+            16,
+            ('v3f',
+             [-1, -1, 0, 1, -1, 0, 1, x - self.HORIZON_SIZE2, 0, -1, x - self.HORIZON_SIZE2, 0] +
+             [-1, x - self.HORIZON_SIZE2, 0, 1, x - self.HORIZON_SIZE2, 0, 1, x, 0, -1, x, 0] +
+             [-1, x, 0, 1, x, 0, 1, x + self.HORIZON_SIZE1, 0, -1, x + self.HORIZON_SIZE1, 0] +
+             [-1, x + self.HORIZON_SIZE1, 0, 1, x + self.HORIZON_SIZE1, 0, 1, 1, 0, -1, 1, 0]
+             ),
+            ('c3B',
+             self.GROUND_COLOR1 * 4 + self.GROUND_COLOR1 * 2 + self.GROUND_COLOR2 * 2 +
+             self.SKY_COLOR2 * 2 + self.SKY_COLOR1 * 2 + self.SKY_COLOR1 * 4
+             )
+        )
+        quad_list.draw(GL_QUADS)
+
+        glLoadIdentity()
+        glMatrixMode(GL_PROJECTION)
+        gluPerspective(self.FOV, self.window.width / float(self.window.height), self.Z_NEAR, self.Z_FAR)
+        self.camera.draw()
+
         self.grid_list.draw(GL_LINES)
 
         glEnable(GL_POINT_SMOOTH)

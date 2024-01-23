@@ -156,7 +156,7 @@ class UserInterface:
         glOrtho(0, self.window.width, -self.window.height, 0, 0, 1000)
 
         go_doc = pyglet.text.Label(
-            text=f"{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
+            text=f"{pyglet.clock.get_fps()}\n{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
             font_name="Consolas",
             font_size=16,
             x=16, y=-16,

@@ -128,7 +128,7 @@ class Protein:
             self.atoms.extend(residue_atoms)
 
         if not isfile(f"data/{protein_name}_data.json"):
-            print(self.output_color2 + "Cache for this protein not found in tje 'data' directory.")
+            print(self.output_color2 + "Cache for this protein not found in the 'data' directory.")
             print(self.output_color2 + "Generating embeddings.")
 
             data = self.generate_embeddings(self.sequence)
@@ -182,7 +182,7 @@ class Protein:
         @param residue: A residue of this protein.
         """
 
-        def get_color(x, luminance=0.5, highlight=False):
+        def get_color(x, luminance=-1, highlight=False):
             """
             Internal function to retrieve a color from the current palette
             @param luminance: Optional brightness
@@ -203,9 +203,13 @@ class Protein:
             if x >= 0:
                 match self.color_palette:
                     case self.RAINBOW:
+                        if luminance == -1:
+                            luminance = 0.5
                         new_color = Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
                     case self.POISSON:
                         new_color.rgb = get_color_from_palette(self.poisson_palette)
+                        if luminance != -1:
+                            new_color.set_luminance(new_color.get_luminance() * 0.5 + luminance * 0.5)
             if highlight:
                 new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.25))
             return [int(b * 255) for b in new_color.rgb]
