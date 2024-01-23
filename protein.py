@@ -47,7 +47,6 @@ class Protein:
     RESIDUE_INDEX = 1  # Color residues by their index in the amino acid sequence
     CLUSTER_INDEX = 2  # Color residues by their associated cluster in the embedding space
     ATOM_TYPE = 3  # Color residues by their atoms using CPK coloring
-    GO_ANNOTATION = 4
 
     # Color palettes (for color modes 1 and 2)
     RAINBOW = 8
@@ -70,7 +69,7 @@ class Protein:
         @param chain_id: Which chain to load from the .pdb file. Defaults to first chain
         @param verbose: Whether extraneous output such as internal warnings are printed
         """
-        self.color_mode = self.GO_ANNOTATION
+        self.color_mode = self.CLUSTER_INDEX
         self.color_palette = self.RAINBOW
 
         if not verbose:
@@ -182,12 +181,10 @@ class Protein:
         @param residue: A residue of this protein.
         """
 
-        def get_color(x, luminance=-1, highlight=False):
+        def get_color(x):
             """
             Internal function to retrieve a color from the current palette
-            @param luminance: Optional brightness
             @param x: [0, 1], different context depending on the current color mode
-            @param highlight: Whether this residue is currently highlighted
             @return: An RGB array.
             """
 
@@ -199,51 +196,42 @@ class Protein:
                 a, b = palette[i % len(palette)], palette[(i + 1) % len(palette)]
                 return [(b[j] * z + a[j] * (1.0 - z)) / 255.0 for j in range(3)]
 
-            new_color = Color(hue=0, saturation=0.0, luminance=0.0)
+            new_color = Color()
             if x >= 0:
                 match self.color_palette:
                     case self.RAINBOW:
-                        if luminance == -1:
-                            luminance = 0.5
-                        new_color = Color(hue=x * 0.75, saturation=0.75, luminance=luminance)
+                        new_color = Color(hue=x * 0.9, saturation=0.6, luminance=luminance)
                     case self.POISSON:
                         new_color.rgb = get_color_from_palette(self.poisson_palette)
-                        if luminance != -1:
-                            new_color.set_luminance(new_color.get_luminance() * 0.5 + luminance * 0.5)
-            if highlight:
+                        new_color.set_luminance(new_color.get_luminance() * 0.25 + luminance * 0.75)
+            if residue.highlighted:
                 new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.25))
             return [int(b * 255) for b in new_color.rgb]
 
+        luminance = residue.go_map[self.current_go_id]
+        luminance *= luminance
         match self.color_mode:
             case self.RESIDUE_INDEX:
-                color = get_color(residue.index / len(self.residues), highlight=residue.highlighted)
+                color = get_color(residue.index / len(self.residues))
 
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
             case self.CLUSTER_INDEX:
-                color = get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                  highlight=residue.highlighted)
-
+                color = get_color(self.cluster_index[residue.index] / self.cluster_count)
                 for atom in residue.atoms:
                     atom.color = color
                 residue.color = color
             case self.ATOM_TYPE:
-                residue.color = get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                          highlight=residue.highlighted)
-                for atom in residue.atoms:
-                    atom.color = self.cpk_colors[atom.bio_atom.get_id()[0]]
-                    if residue.highlighted:
-                        atom.color = [min(255, c + 128) for c in atom.color]
-            case self.GO_ANNOTATION:
-                lum = residue.go_map[self.current_go_id]
-                lum = 0.75 * lum
-                color = get_color(self.cluster_index[residue.index] / self.cluster_count,
-                                  luminance=lum, highlight=residue.highlighted)
+                residue.color = get_color(self.cluster_index[residue.index] / self.cluster_count)
 
                 for atom in residue.atoms:
-                    atom.color = color
-                residue.color = color
+                    color = Color()
+                    color.rgb = [c / 255.0 for c in self.cpk_colors[atom.bio_atom.get_id()[0]]]
+                    color.set_luminance(color.get_luminance() * 0.25 + luminance * 0.75)
+                    if residue.highlighted:
+                        color.set_luminance(min(1.0, color.get_luminance() + 0.25))
+                    atom.color = [int(c * 255) for c in color.rgb]
 
     # Taken from https://github.com/tbepler/prose
     @staticmethod

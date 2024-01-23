@@ -36,7 +36,7 @@ class UserInterface:
             self.go_idx = self.go_idx % len(self.protein.go_ids)
             self.protein.current_go_id = self.protein.go_ids[self.go_idx]
 
-            self.protein.update_colors(self.protein.GO_ANNOTATION)
+            self.protein.update_colors()
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
 
@@ -45,7 +45,7 @@ class UserInterface:
             self.go_idx = self.go_idx % len(self.protein.go_ids)
             self.protein.current_go_id = self.protein.go_ids[self.go_idx]
 
-            self.protein.update_colors(self.protein.GO_ANNOTATION)
+            self.protein.update_colors()
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
 
@@ -59,10 +59,6 @@ class UserInterface:
             self.pdb_renderer.update_colors()
         if symbol == pyglet.window.key._3:
             self.protein.update_colors(self.protein.ATOM_TYPE)
-            self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
-        if symbol == pyglet.window.key._4:
-            self.protein.update_colors(self.protein.GO_ANNOTATION)
             self.pdb_renderer.update_colors()
             self.pdb_renderer.update_colors()
 
