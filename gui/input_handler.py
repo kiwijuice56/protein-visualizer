@@ -1,6 +1,7 @@
 import pyglet
 
 
+# Only used in the renderers, not UI
 class InputHandler(object):
     def __init__(self):
         self.x = 0

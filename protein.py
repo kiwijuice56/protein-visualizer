@@ -45,15 +45,15 @@ class Residue:
 # Contains information about a protein, such as its 3D structure and node embeddings
 class Protein:
     # Color modes
-    RESIDUE_INDEX = 1  # Color residues by their index in the amino acid sequence
-    CLUSTER_INDEX = 2  # Color residues by their associated cluster in the embedding space
+    CLUSTER_INDEX = 1  # Color residues by their associated cluster in the embedding space
+    RESIDUE_INDEX = 2  # Color residues by their index in the amino acid sequence
     ATOM_TYPE = 3  # Color residues by their atoms using CPK coloring
 
     # Color palettes (for color modes 1 and 2)
-    MONOCOLOR = 6
-    GRAPE = 7
-    RAINBOW = 8
-    POISSON = 9
+    RAINBOW = 6
+    MONOCOLOR = 7
+    POISSON = 8
+    GRAPE = 9
 
     poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
