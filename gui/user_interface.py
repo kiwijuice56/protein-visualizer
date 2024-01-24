@@ -7,24 +7,23 @@ from pyglet.gl import *
 class DropDown(pyglet.gui.WidgetBase):
     BACKGROUND_COLOR = (0, 0, 0, 140)
 
-    def __init__(self, x, y, width, height, title, options, window, batch):
+    def __init__(self, x, y, width, height, title, options, window, batch, bg_batch):
         pyglet.gui.WidgetBase.__init__(self, x, y, width, height)
         self.batch = batch
         self.window = window
-        self.window.push_handlers(self.on_mouse_press)
+        self.window.push_handlers(self.on_mouse_press, self.on_mouse_drag)
 
         self.bounding_box = [x, y, width, height]
 
         self.title = title
         self.options = options
         self.selected_option = options[0]
-        self.open = False
+        self.is_open = False
 
         self.batch = batch
         self.buttons = []
         for i, option in enumerate(self.options):
-            button = Button(self.x, self.y - 32 * (i + 2), self.width, 32, self.options[i], i, self.window, self.batch)
-            button.hide()
+            button = Button(self.x, self.y - 32 * (i + 2), self.width, 32, self.options[i], i, self.window, self.batch, bg_batch)
             self.buttons.append(button)
 
         self.title = pyglet.text.Label(
@@ -33,46 +32,62 @@ class DropDown(pyglet.gui.WidgetBase):
             anchor_x="left", anchor_y="top", batch=self.batch)
 
         self.current_option = pyglet.text.Label(
-            text='%-21s ▼' % self.selected_option, font_name="Consolas", multiline=True,
+            text='%-21s ▾' % self.selected_option, font_name="Consolas", multiline=True,
             font_size=16, x=self.x, y=-52, width=self.width,
             anchor_x="left", anchor_y="top", batch=self.batch)
 
         self.background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3],
-                                                  batch=self.batch)
+                                                  batch=bg_batch)
         self.background.y -= 32
         self.background.opacity = self.BACKGROUND_COLOR[3]
+
+        self.close()
 
     def on_mouse_press(self, x, y, button, modifiers):
         y = y - self.window.height
         box = [c for c in self.bounding_box]
         box[1] -= 32
         if not (x > box[0] and x - box[0] < box[2] and
-                y > box[1] and y - box[1] < box[3]) or self.open:
-            for button in self.buttons:
-                self.open = False
-                button.hide()
+                y > box[1] and y - box[1] < box[3]) or self.is_open:
+            self.close()
         else:
-            for button in self.buttons:
-                self.open = True
-                button.show()
+            self.open()
             return pyglet.event.EVENT_HANDLED
+
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        y = y - self.window.height
+        box = [c for c in self.bounding_box]
+        box[1] -= 32
+        if x > box[0] and x - box[0] < box[2] and y > box[1] and y - box[1] < box[3]:
+            return pyglet.event.EVENT_HANDLED
+
+    def open(self):
+        self.is_open = True
+        for button in self.buttons:
+            button.show()
+
+    def close(self):
+        self.is_open = False
+        for button in self.buttons:
+            button.hide()
 
 
 class Button(pyglet.gui.WidgetBase):
     BACKGROUND_COLOR = (0, 0, 0, 140)
+    HOVER_COLOR = (64, 64, 64, 190)
 
-    def __init__(self, x, y, width, height, text, index, window, batch):
+    def __init__(self, x, y, width, height, text, index, window, batch, bg_batch):
         pyglet.gui.WidgetBase.__init__(self, x, y, width, height)
         self.batch = batch
         self.window = window
-        window.push_handlers(self.on_mouse_press)
+        window.push_handlers(self.on_mouse_press, self.on_mouse_motion)
 
         self.bounding_box = [x, y, width, height]
         self.text = text
         self.index = index
 
         self.background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3],
-                                                  batch=self.batch)
+                                                  batch=bg_batch)
         self.background.opacity = self.BACKGROUND_COLOR[3]
         self.label = pyglet.text.Label(
             text=self.text, font_name="Consolas", multiline=True,
@@ -81,10 +96,12 @@ class Button(pyglet.gui.WidgetBase):
 
         self.visible = False
         self.pressed = False
+        self.hovered = False
 
     def show(self):
         self.label.batch = self.batch
         self.background.batch = self.batch
+        self.background.color = self.BACKGROUND_COLOR[0: 3]
         self.background.opacity = self.BACKGROUND_COLOR[3]
         self.visible = True
 
@@ -99,11 +116,22 @@ class Button(pyglet.gui.WidgetBase):
 
         y = y - self.window.height
         box = [c for c in self.bounding_box]
-        if not (x > box[0] and x - box[0] < box[2] and
-                y > box[1] and y - box[1] < box[3]):
-            return
-        else:
+        if x > box[0] and x - box[0] < box[2] and y > box[1] and y - box[1] < box[3]:
             self.pressed = True
+            return pyglet.event.EVENT_HANDLED
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        y = y - self.window.height
+        box = [c for c in self.bounding_box]
+        if self.visible and x > box[0] and x - box[0] < box[2] and y > box[1] and y - box[1] < box[3]:
+            self.background.color = self.HOVER_COLOR[0: 3]
+            self.background.opacity = self.HOVER_COLOR[3]
+            self.hovered = True
+            return pyglet.event.EVENT_HANDLED
+        elif self.hovered and self.visible:
+            self.hovered = False
+            self.background.color = self.BACKGROUND_COLOR[0: 3]
+            self.background.opacity = self.BACKGROUND_COLOR[3]
 
 
 class UserInterface:
@@ -114,6 +142,7 @@ class UserInterface:
         self.embedding_renderer = embedding_renderer
 
         self.batch = pyglet.graphics.Batch()
+        self.bg_batch = pyglet.graphics.Batch()
 
         window.push_handlers(self.on_key_press)
         window.push_handlers(self.on_mouse_motion)
@@ -129,10 +158,10 @@ class UserInterface:
 
         self.color_mode = DropDown(x=16, y=-48, width=292, height=32, title="Coloring Mode",
                                    options=["Functional Similarity", "Amino Acid Order", "Atom Type"],
-                                   window=window, batch=self.batch)
+                                   window=window, batch=self.batch, bg_batch=self.bg_batch)
         self.color_palette = DropDown(x=324, y=-48, width=292, height=32, title="Color Palette",
                                       options=["Rainbow", "Monocolor", "Poisson", "Grape"],
-                                      window=window, batch=self.batch)
+                                      window=window, batch=self.batch, bg_batch=self.bg_batch)
 
         self.update_residue_label()
 
@@ -242,14 +271,16 @@ class UserInterface:
         for button in self.color_mode.buttons:
             if button.pressed:
                 button.pressed = False
-                self.color_mode.current_option.text = '%-21s ▼' % button.label.text
+                self.color_mode.close()
+                self.color_mode.current_option.text = '%-21s ▾' % button.label.text
                 self.protein.update_colors(new_color_mode=button.index + 1)
                 self.pdb_renderer.update_colors()
                 self.embedding_renderer.update_colors()
         for button in self.color_palette.buttons:
             if button.pressed:
                 button.pressed = False
-                self.color_palette.current_option.text = '%-21s ▼' % button.label.text
+                self.color_palette.close()
+                self.color_palette.current_option.text = '%-21s ▾' % button.label.text
                 self.protein.update_colors(new_color_palette=button.index + 6)
                 self.pdb_renderer.update_colors()
                 self.embedding_renderer.update_colors()
@@ -261,4 +292,5 @@ class UserInterface:
             anchor_x="left", anchor_y="top")
         go_doc.draw()
 
+        self.bg_batch.draw()
         self.batch.draw()
