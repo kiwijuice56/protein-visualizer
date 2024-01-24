@@ -4,12 +4,65 @@ import pyglet
 from pyglet.gl import *
 
 
+class DropDown(pyglet.gui.WidgetBase):
+    BACKGROUND_COLOR = (0, 0, 0, 140)
+
+    def __init__(self, x, y, width, height, title, options, batch):
+        pyglet.gui.WidgetBase.__init__(self, x, y, width, height)
+        self.batch = batch
+
+        self.bounding_box = [x, y, width, height]
+        self.title = title
+        self.options = options
+        self.selected_option = options[0]
+
+        self.batch = batch
+        self.buttons = []
+        for i, option in enumerate(self.options):
+            button = Button(self.x, self.y - 32 * (i + 2), self.width, 32, self.options[i], self.batch)
+            self.buttons.append(button)
+
+        self.title = pyglet.text.Label(
+            text=self.title, font_name="Consolas", multiline=True,
+            font_size=16, x=16, y=-20, width=self.width,
+            anchor_x="left", anchor_y="top", batch=self.batch)
+
+        self.current_option = pyglet.text.Label(
+            text=f"{self.selected_option} ▼", font_name="Consolas", multiline=True,
+            font_size=16, x=16, y=-52, width=self.width,
+            anchor_x="left", anchor_y="top", batch=self.batch)
+
+        self.background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3], batch=self.batch)
+        self.background.y -= 32
+        self.background.opacity = self.BACKGROUND_COLOR[3]
+
+
+class Button(pyglet.gui.WidgetBase):
+    BACKGROUND_COLOR = (0, 0, 0, 140)
+
+    def __init__(self, x, y, width, height, text, batch):
+        pyglet.gui.WidgetBase.__init__(self, x, y, width, height)
+        self.batch = batch
+
+        self.bounding_box = [x, y, width, height]
+        self.text = text
+
+        pyglet.text.Label(
+            text=self.text, font_name="Consolas", multiline=True,
+            font_size=16, x=self.x, y=self.y + 28, width=self.width,
+            anchor_x="left", anchor_y="top", batch=self.batch)
+        background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3], batch=self.batch)
+        background.opacity = self.BACKGROUND_COLOR[3]
+
+
 class UserInterface:
     def __init__(self, protein, window, pdb_renderer, embedding_renderer):
         self.protein = protein
         self.window = window
         self.pdb_renderer = pdb_renderer
         self.embedding_renderer = embedding_renderer
+
+        self.batch = pyglet.graphics.Batch()
 
         window.push_handlers(self.on_key_press)
         window.push_handlers(self.on_mouse_motion)
@@ -22,6 +75,10 @@ class UserInterface:
 
         self.res_doc = pyglet.text.document.FormattedDocument()
         self.res_layout = None
+
+        self.color_mode = DropDown(x=16, y=-48, width=352, height=32, title="Coloring Mode",
+                                   options=["Functional Similarity", "Amino Acid Order", "Atom Type"],
+                                   batch=self.batch)
 
         self.update_residue_label()
 
@@ -47,29 +104,37 @@ class UserInterface:
 
             self.protein.update_colors()
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
 
         if symbol == pyglet.window.key._1:
             self.protein.update_colors(self.protein.CLUSTER_INDEX)
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
         if symbol == pyglet.window.key._2:
             self.protein.update_colors(self.protein.RESIDUE_INDEX)
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
         if symbol == pyglet.window.key._3:
             self.protein.update_colors(self.protein.ATOM_TYPE)
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
 
+        if symbol == pyglet.window.key._6:
+            self.protein.update_colors(new_color_palette=self.protein.MONOCOLOR)
+            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
+        if symbol == pyglet.window.key._7:
+            self.protein.update_colors(new_color_palette=self.protein.GRAPE)
+            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
         if symbol == pyglet.window.key._8:
             self.protein.update_colors(new_color_palette=self.protein.RAINBOW)
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
         if symbol == pyglet.window.key._9:
             self.protein.update_colors(new_color_palette=self.protein.POISSON)
             self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
+            self.embedding_renderer.update_colors()
 
         if symbol == pyglet.window.key.O:
             self.pdb_renderer.outline = not self.pdb_renderer.outline
@@ -102,17 +167,15 @@ class UserInterface:
 
     def update_residue_label(self):
         if self.res_layout:
+            self.res_layout.delete()
             self.res_layout.begin_update()
         self.res_doc.text = ""
 
-        text_style = {"font_name": "Consolas",
-                      "font_size": 16,
-                      "background_color": (0, 0, 0, 140),
-                      "color": (255, 255, 255, 255),
-                      "wrap": False}
+        text_style = {"font_name": "Consolas", "font_size": 16, "wrap": False,
+                      "background_color": (0, 0, 0, 140), "color": (255, 255, 255, 255)}
 
         # Rough estimate of how many amino acid labels can fit on screen
-        labels_fit = math.ceil(self.window.width / 32.0)
+        labels_fit = math.ceil(self.window.width / 52.0)
 
         # Draw the residue label indices
         for i in range(-2, labels_fit + 1):
@@ -121,7 +184,7 @@ class UserInterface:
                 adj = len(self.protein.residues) + adj
             if adj >= len(self.protein.residues):
                 adj -= len(self.protein.residues)
-            snippet = f"{'%-8d' % self.protein.residues[adj].index}"
+            snippet = '%-8d ' % self.protein.residues[adj].index
             color = tuple((255, 230, 0, 255) if i == 0 and not self.hl_idx == -1 else [255, 255, 255, 255])
             text_style["color"] = color
             text_style["font_size"] = 8
@@ -135,12 +198,12 @@ class UserInterface:
                 adj = len(self.protein.residues) + adj
             if adj >= len(self.protein.residues):
                 adj -= len(self.protein.residues)
-            snippet = f"{'%3s' % self.protein.residues[adj].bio_residue.get_resname()} "
+            snippet = '%3s ' % self.protein.residues[adj].bio_residue.get_resname()
             color = tuple((255, 230, 0, 255) if i == 0 and not self.hl_idx == -1 else [255, 255, 255, 255])
             text_style["color"] = color
             text_style["font_size"] = 16
             self.res_doc.insert_text(len(self.res_doc.text), snippet, text_style)
-        self.res_layout = pyglet.text.layout.TextLayout(self.res_doc, multiline=True, width=self.window.width)
+        self.res_layout = pyglet.text.layout.TextLayout(self.res_doc, multiline=True, width=self.window.width, batch=self.batch)
         self.res_layout.anchor_x = "left"
         self.res_layout.anchor_y = "bottom"
         self.res_layout.y = -self.window.height
@@ -153,13 +216,9 @@ class UserInterface:
 
         go_doc = pyglet.text.Label(
             text=f"{pyglet.clock.get_fps()}\n{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
-            font_name="Consolas",
-            font_size=16,
-            x=16, y=-16,
-            multiline=True,
-            width=self.window.width,
+            font_name="Consolas",  multiline=True,
+            font_size=16, x=128, y=-128, width=self.window.width,
             anchor_x="left", anchor_y="top")
-
-        if self.res_layout:
-            self.res_layout.draw()
         go_doc.draw()
+
+        self.batch.draw()

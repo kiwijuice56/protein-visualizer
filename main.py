@@ -23,10 +23,10 @@ root.iconbitmap("img/icon.ico")
 root.withdraw()
 
 # Initialize protein
-protein = Protein(filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')]))
+protein = Protein("data/alphafold_generation.pdb")#filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')]))
 
 # Initialize window
-window = pyglet.window.Window(resizable=True)
+window = pyglet.window.Window(resizable=True, vsync=0)
 window.set_caption("protein-visualizer")
 icon_ico = pyglet.image.load("img/icon.ico")
 icon_png = pyglet.image.load("img/icon.png")
@@ -37,6 +37,7 @@ root.destroy()
 # Initialize renderers
 pdb_renderer = PDBRenderer(protein, window)
 embedding_renderer = EmbeddingRenderer(protein, window)
+embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3), int(window.width * 0.3)])
 
 # Initialize UI
 ui = UserInterface(protein, window, pdb_renderer, embedding_renderer)
@@ -49,7 +50,6 @@ def on_draw():
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
-    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3), int(window.width * 0.3)])
     embedding_renderer.draw()
 
     # Draw the user interface
@@ -62,6 +62,7 @@ def on_draw():
 def on_resize(width, height):
     if ui.res_layout:
         ui.update_residue_label()
+    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3), int(window.width * 0.3)])
 
 
 def on_update(delta_time):

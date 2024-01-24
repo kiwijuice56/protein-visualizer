@@ -18,8 +18,8 @@ class Atom:
         self.residue = residue
         self.index = index
 
-        # Atom color is only used in ATOM_TYPE color mode
         self.color = [0, 0, 0]
+        self.outline_color = [32, 32, 32]
 
 
 # Wrapper class for collections of atoms
@@ -35,6 +35,7 @@ class Residue:
         self.index = index
 
         self.color = [0, 0, 0]
+        self.outline_color = [32, 32, 32]
         self.highlighted = False
 
         # A string [GO id] : float [0.0, 1.0] pair of how strongly this residue contributed to a certain GO prediction
@@ -49,6 +50,8 @@ class Protein:
     ATOM_TYPE = 3  # Color residues by their atoms using CPK coloring
 
     # Color palettes (for color modes 1 and 2)
+    MONOCOLOR = 6
+    GRAPE = 7
     RAINBOW = 8
     POISSON = 9
 
@@ -57,6 +60,10 @@ class Protein:
                        (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
                        (167, 103, 114), (204, 134, 125), (224, 186, 139), (195, 130, 82), (161, 86, 60),
                        (111, 52, 45), (68, 39, 31)]
+
+    grape_palette = [(3, 6, 55), (60, 7, 83), (114, 4, 85), (145, 10, 103), (194, 48, 131)]
+
+    monocolor_palette = [(59, 212, 59)]
 
     cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
                   "P": (235, 145, 56), "_": (255, 255, 255)}
@@ -200,16 +207,26 @@ class Protein:
             if x >= 0:
                 match self.color_palette:
                     case self.RAINBOW:
-                        new_color = Color(hue=x * 0.9, saturation=0.6, luminance=luminance)
+                        new_color = Color(hue=x * 0.7, saturation=0.6, luminance=0.5)
                     case self.POISSON:
                         new_color.rgb = get_color_from_palette(self.poisson_palette)
-                        new_color.set_luminance(new_color.get_luminance() * 0.25 + luminance * 0.75)
+                    case self.GRAPE:
+                        new_color.rgb = get_color_from_palette(self.grape_palette)
+                    case self.MONOCOLOR:
+                        new_color.rgb = get_color_from_palette(self.monocolor_palette)
+                new_color.set_luminance(new_color.get_luminance() * luminance)
             if residue.highlighted:
-                new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.25))
+                new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.35))
             return [int(b * 255) for b in new_color.rgb]
 
         luminance = residue.go_map[self.current_go_id]
         luminance *= luminance
+
+        residue.outline_color = [int(luminance * 86)] * 3
+
+        for atom in residue.atoms:
+            atom.outline_color = residue.outline_color
+
         match self.color_mode:
             case self.RESIDUE_INDEX:
                 color = get_color(residue.index / len(self.residues))
@@ -228,9 +245,9 @@ class Protein:
                 for atom in residue.atoms:
                     color = Color()
                     color.rgb = [c / 255.0 for c in self.cpk_colors[atom.bio_atom.get_id()[0]]]
-                    color.set_luminance(color.get_luminance() * 0.25 + luminance * 0.75)
+                    color.set_luminance(color.get_luminance() * luminance)
                     if residue.highlighted:
-                        color.set_luminance(min(1.0, color.get_luminance() + 0.25))
+                        color.set_luminance(min(1.0, color.get_luminance() + 0.35))
                     atom.color = [int(c * 255) for c in color.rgb]
 
     # Taken from https://github.com/tbepler/prose

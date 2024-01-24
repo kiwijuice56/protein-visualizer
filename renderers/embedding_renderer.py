@@ -20,12 +20,15 @@ class Camera2D(object):
         self.mouse_sensitivity = mouse_sensitivity
         self.scroll_sensitivity = scroll_sensitivity
 
+        self.updated = False
+
     def update(self):
+        self.updated = self.input_handler.dx_left != 0 or self.input_handler.dy_left != 0 or self.input_handler.scroll_y != 0
+
         self.pos[0] -= self.input_handler.dx_left * self.movement_speed * self.mouse_sensitivity * self.scale
         self.input_handler.dx_left = 0
 
         self.pos[1] -= self.input_handler.dy_left * self.movement_speed * self.mouse_sensitivity * self.scale
-        self.input_handler.dy_left = 0
 
         self.scale -= self.scroll_sensitivity * self.scale * self.input_handler.scroll_y
         self.scale = max(self.ZOOM_RANGE[0], min(self.ZOOM_RANGE[1], self.scale))
@@ -172,6 +175,10 @@ class EmbeddingRenderer:
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_BLEND)
         glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
+
+        if self.camera.updated:
+            self.set_bounding_box(self.bounding_box)
+            self.camera.updated = False
 
         background = pyglet.shapes.Rectangle(*self.bounding_box, color=self.BACKGROUND_COLOR[0:3])
         background.opacity = self.BACKGROUND_COLOR[3]

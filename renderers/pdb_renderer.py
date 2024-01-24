@@ -82,10 +82,10 @@ class PDBRenderer:
     GRID_LINE_COUNT = 16
     BACKGROUND_COLOR = (0, 0, 0, 0)
 
-    SKY_COLOR1 = (191, 220, 227)
-    SKY_COLOR2 = (255, 255, 255)
-    GROUND_COLOR1 = (40, 50, 54)
-    GROUND_COLOR2 = (78, 93, 97)
+    SKY_COLOR1 = (114, 136, 142)
+    SKY_COLOR2 = (149, 169, 176)
+    GROUND_COLOR1 = (40, 50, 55)
+    GROUND_COLOR2 = (51, 64, 69)
     SKY_DISTANCE = 1000.0
     HORIZON_SIZE1 = 0.3
     HORIZON_SIZE2 = 0.1
@@ -142,12 +142,11 @@ class PDBRenderer:
             len(self.protein.atoms),
             ('v3f', point_coordinates),
             ('c3B', [x for xs in rgb_id for x in xs]))
-        self.update_colors()
-
         self.outline_vertices = pyglet.graphics.vertex_list(
             len(self.protein.atoms),
             ('v3f', point_coordinates),
             ('c3B', np.full(len(self.protein.atoms) * 3, 8, dtype=np.byte)))
+        self.update_colors()
 
         self.camera = Camera3D(window)
 
@@ -179,6 +178,7 @@ class PDBRenderer:
             end = len(self.protein.atoms)
         for i in range(start, end):
             self.atom_vertices.colors[i * 3: i * 3 + 3] = self.protein.atoms[i].color
+            self.outline_vertices.colors[i * 3: i * 3 + 3] = self.protein.atoms[i].outline_color
 
     def set_point_size(self, new_size):
         self.point_size = max(self.POINT_SIZE_RANGE[0], min(self.POINT_SIZE_RANGE[1], new_size))
