@@ -6,6 +6,14 @@ from gui.button import *
 
 
 class UserInterface:
+    PROTEIN_NAMES = {"ala": "alanine", "arg": "arginine", "asn": "asparagine", "asp": "aspartic acid",
+                     "asx": "asparagine or aspartic acid", "cys": "cysteine", "glu": "glutamic acid",
+                     "gln": "glutamine", "glx": "glutamine or glutamic acid", "gly": "glycine",
+                     "his": "histidine", "ile": "isoleucine", "leu": "leucine", "lys": "lysine",
+                     "met": "methionine", "phe": "phenylalanine", "pro": "proline", "ser": "serine",
+                     "thr": "threonine", "trp": "tryptophan", "tyr": "tyrosine",
+                     "val": "valine"}
+
     def __init__(self, protein, window, pdb_renderer, embedding_renderer):
         self.protein = protein
         self.window = window
@@ -27,11 +35,21 @@ class UserInterface:
         self.res_doc = pyglet.text.document.FormattedDocument()
         self.res_layout = None
 
-        self.color_mode = DropDown(bounding_box=[16, -80, 292, 32], title="Coloring Mode",
+        self.color_mode = DropDown(bounding_box=[16, -80, 280, 32], title="Coloring Mode",
                                    options=["Functional Similarity", "Amino Acid Order", "Atom Type"],
                                    window=window, batch=self.batch, bg_batch=self.bg_batch)
-        self.color_palette = DropDown(bounding_box=[324, -80, 292, 32], title="Color Palette",
+        self.color_palette = DropDown(bounding_box=[312, -80, 280, 32], title="Color Palette",
                                       options=["Rainbow", "Monocolor", "Poisson", "Grape"],
+                                      window=window, batch=self.batch, bg_batch=self.bg_batch)
+        go_titles = []
+        for i in range(len(self.protein.go_ids)):
+            go_title = self.protein.go_ids[i][3:] + " " + self.protein.go_names[i]
+            if len(go_title) > 32:
+                go_title = go_title[0: 32]
+            go_titles.append(go_title)
+
+        self.go_annotation = DropDown(bounding_box=[608, -80, 416, 32], title="GO Annotation",
+                                      options=go_titles,
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
 
         self.update_residue_label()
@@ -41,24 +59,6 @@ class UserInterface:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size + 1)
         if symbol == pyglet.window.key.DOWN:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size - 1)
-
-        if symbol == pyglet.window.key.RIGHT:
-            self.go_idx += 1
-            self.go_idx = self.go_idx % len(self.protein.go_ids)
-            self.protein.current_go_id = self.protein.go_ids[self.go_idx]
-
-            self.protein.update_colors()
-            self.pdb_renderer.update_colors()
-            self.pdb_renderer.update_colors()
-
-        if symbol == pyglet.window.key.LEFT:
-            self.go_idx -= 1
-            self.go_idx = self.go_idx % len(self.protein.go_ids)
-            self.protein.current_go_id = self.protein.go_ids[self.go_idx]
-
-            self.protein.update_colors()
-            self.pdb_renderer.update_colors()
-            self.embedding_renderer.update_colors()
 
         if symbol == pyglet.window.key.O:
             self.pdb_renderer.outline = not self.pdb_renderer.outline
@@ -108,7 +108,7 @@ class UserInterface:
                 adj = len(self.protein.residues) + adj
             if adj >= len(self.protein.residues):
                 adj -= len(self.protein.residues)
-            snippet = '%-8d ' % self.protein.residues[adj].index
+            snippet = '%-8d' % self.protein.residues[adj].index
             color = tuple((255, 230, 0, 255) if i == 0 and not self.hl_idx == -1 else [255, 255, 255, 255])
             text_style["color"] = color
             text_style["font_size"] = 8
@@ -139,7 +139,7 @@ class UserInterface:
         glEnable(GL_BLEND)
         glOrtho(0, self.window.width, -self.window.height, 0, 0, 1000)
 
-        for dropdown in [self.color_mode, self.color_palette]:
+        for dropdown in [self.color_mode, self.color_palette, self.go_annotation]:
             if dropdown.pressed:
                 dropdown.pressed = False
                 if dropdown.is_open:
@@ -163,13 +163,36 @@ class UserInterface:
                 self.protein.update_colors(new_color_palette=button.index + 6)
                 self.pdb_renderer.update_colors()
                 self.embedding_renderer.update_colors()
+        for button in self.go_annotation.buttons:
+            if button.pressed:
+                button.pressed = False
+                self.go_annotation.close()
+                self.go_annotation.label.text = '%-32s ▾' % button.label.text
+                self.go_idx = button.index
+                self.protein.current_go_id = self.protein.go_ids[self.go_idx]
+
+                self.protein.update_colors()
+                self.pdb_renderer.update_colors()
+                self.embedding_renderer.update_colors()
 
         go_doc = pyglet.text.Label(
             text=f"{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
             font_name="Consolas", multiline=True,
-            font_size=16, x=632, y=-16, width=self.window.width,
+            font_size=16, x=1040, y=-16, width=self.window.width,
             anchor_x="left", anchor_y="top")
         go_doc.draw()
+
+        if self.hl_idx != -1:
+            res = self.protein.residues[self.hl_idx]
+            name = res.bio_residue.get_resname().lower()
+
+            info_doc = pyglet.text.Label(
+                text=f"{self.PROTEIN_NAMES[name] if name in self.PROTEIN_NAMES else 'unknown residue'}\n"
+                     f"saliency: {res.go_map[self.protein.current_go_id]}",
+                font_name="Consolas", multiline=True,
+                font_size=16, x=16, y=-self.window.height + 96+8, width=self.window.width,
+                anchor_x="left", anchor_y="top")
+            info_doc.draw()
 
         self.bg_batch.draw()
         self.batch.draw()
