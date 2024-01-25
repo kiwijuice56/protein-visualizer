@@ -54,6 +54,8 @@ class Protein:
     MONOCOLOR = 7
     POISSON = 8
     GRAPE = 9
+    PENGUIN = 10
+    LEMON = 11
 
     poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
@@ -65,10 +67,16 @@ class Protein:
 
     monocolor_palette = [(59, 212, 59)]
 
+    penguin_palette = [(43, 48, 58), (146, 220, 229), (238, 229, 233), (124, 124, 124), (214, 73, 51)]
+
+    lemon_palette = [(191, 174, 72), (95, 173, 65), (45, 147, 108), (57, 20, 99), (58, 8, 66)]
+
     cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
                   "P": (235, 145, 56), "_": (255, 255, 255)}
+
+    # Codes to color the terminal text
     output_color = "\033[96m"
-    output_color2 = "\033[92m"
+    output_color2 = "\u001b[33m"
 
     def __init__(self, pdb_path, chain_id=None, verbose=False):
         """
@@ -171,9 +179,8 @@ class Protein:
     def update_colors(self, new_color_mode=None, new_color_palette=None):
         """
         Updates the color of the residues within this protein. Slow performance, do not call regularly
-        @param new_color_mode: Options: Protein.RESIDUE_INDEX, Protein.CLUSTER_INDEX, Protein.ATOM_TYPE,
-        Protein.GO_ANNOTATION
-        @param new_color_palette: Options: Protein.RAINBOW, Protein.POISSON
+        @param new_color_mode: Options: Any of the Protein color modes
+        @param new_color_palette: Options: Any of the Protein color palettes
         """
         if new_color_mode:
             self.color_mode = new_color_mode
@@ -214,6 +221,10 @@ class Protein:
                         new_color.rgb = get_color_from_palette(self.grape_palette)
                     case self.MONOCOLOR:
                         new_color.rgb = get_color_from_palette(self.monocolor_palette)
+                    case self.PENGUIN:
+                        new_color.rgb = get_color_from_palette(self.penguin_palette)
+                    case self.LEMON:
+                        new_color.rgb = get_color_from_palette(self.lemon_palette)
                 new_color.set_luminance(new_color.get_luminance() * luminance)
             if residue.highlighted:
                 new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.35))

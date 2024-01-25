@@ -39,7 +39,7 @@ class UserInterface:
                                    options=["Functional Similarity", "Amino Acid Order", "Atom Type"],
                                    window=window, batch=self.batch, bg_batch=self.bg_batch)
         self.color_palette = DropDown(bounding_box=[312, -80, 280, 32], title="Color Palette",
-                                      options=["Rainbow", "Monocolor", "Poisson", "Grape"],
+                                      options=["Rainbow", "Monocolor", "Nature", "Grape", "Penguin", "Lemon"],
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
         go_titles = []
         for i in range(len(self.protein.go_ids)):
@@ -59,7 +59,6 @@ class UserInterface:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size + 1)
         if symbol == pyglet.window.key.DOWN:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size - 1)
-
         if symbol == pyglet.window.key.O:
             self.pdb_renderer.outline = not self.pdb_renderer.outline
 

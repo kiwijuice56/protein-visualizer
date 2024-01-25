@@ -1,3 +1,5 @@
+import os
+
 from renderers.pdb_renderer import PDBRenderer
 from renderers.embedding_renderer import EmbeddingRenderer
 from protein import Protein
@@ -11,8 +13,11 @@ from tkinter import filedialog
 
 from ctypes import windll
 
-print("protein-visualizer version 1.0, documentation: https://kiwijuice56.github.io/protein-visualizer/")
-print("-" * 8)
+# Enable terminal color on Windows
+os.system("color")
+
+print("protein-visualizer version 1.0, documentation: \u001b[35mhttps://kiwijuice56.github.io/protein-visualizer/")
+print("\u001b[37m-" * 8)
 print("Select a .pdb file to render.")
 
 # Fix screen resolution
@@ -23,7 +28,7 @@ root.iconbitmap("img/icon.ico")
 root.withdraw()
 
 # Initialize protein
-protein = Protein("data/alphafold_generation.pdb")#filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')]))
+protein = Protein(filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')]))
 
 # Initialize window
 window = pyglet.window.Window(resizable=True, vsync=0)
@@ -46,7 +51,6 @@ ui = UserInterface(protein, window, pdb_renderer, embedding_renderer)
 @window.event
 def on_draw():
     # Draw the 3D protein
-    pdb_renderer.set_bounding_box([0, 0, window.width, window.height])
     pdb_renderer.draw()
 
     # Draw the 2D embeddings
@@ -62,7 +66,9 @@ def on_draw():
 def on_resize(width, height):
     if ui.res_layout:
         ui.update_residue_label()
-    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3), int(window.width * 0.3)])
+    pdb_renderer.set_bounding_box([0, 0, window.width, window.height])
+    embedding_renderer.set_bounding_box([int(window.width * 0.7) - 8, 47, int(window.width * 0.3),
+                                         int(window.width * 0.3)])
 
 
 def on_update(delta_time):
