@@ -67,7 +67,9 @@ class UserInterface:
 
     def on_mouse_motion(self, x, y, dx, dy):
         prev_hl_idx = self.hl_idx
-        self.hl_idx = self.pdb_renderer.hovered_residue
+        self.hl_idx = self.embedding_renderer.hovered_residue
+        if self.hl_idx == -1:
+            self.hl_idx = self.pdb_renderer.hovered_residue
 
         if not prev_hl_idx == -1:
             self.protein.residues[prev_hl_idx].highlighted = False

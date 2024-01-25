@@ -20,14 +20,15 @@
                 through deep learning.</p>
             <img src="demo_run.png" alt="Demonstration of running the visualizer"/>
             <h2>How does it work?</h2>
-            <p>This interactive visualizer uses a deep learning model to identify functional and structural clusters within
+            <p>This interactive visualizer uses a neural network to identify functional and structural clusters within
             a protein by calculating embeddings, numerical expressions of each amino acid. The high-dimensional
             data is then transformed into 2D in order to easily interpret the possible functional components of a
-            protein. Next, a different deep learning model uses both the 3D structure and amino acid sequence to predict
+            protein. Next, a graph convolutional network uses both the 3D structure and amino acid sequence to predict
             Gene Ontology (GO) annotations that describe the molecular function of the protein. Through
             Gradient-weighted Class Activation Mapping (GradCAM), the program can calculate how much each amino
             acid contributed to each GO prediction and subsequently allow for the identification of functional residues.</p>
-            <p><b>Note:</b> All of the data (except for 3D structure) shown in this program is generated through machine
+            <p>This program was written entirely with Python, using Pyglet as an OpenGL interface.</p>
+            <p><b>Disclaimer:</b> All of the data (except for 3D structure) shown in this program is generated through machine
             learning and thus cannot be verified to be completely accurate. It is recommended to double-check
                 the predicted functions through experimental sources </p>
 
@@ -75,7 +76,8 @@
         </section>
         <section id="Code">
             <h1>Code</h1>
-            All of the code is available under the MIT license on the <a href="https://github.com/kiwijuice56/protein-visualizer">protein-visualizer GitHub repository.</a>
+            <p>All of the code is available under the MIT license on the <a href="https://github.com/kiwijuice56/protein-visualizer">protein-visualizer GitHub repository.</a>
+            Feel free to take any part of the code to expand or transform, just make sure you keep the attributions to ProSE and DeepFRI!
         </section>
         <section id="Attribution">
             <h1>Attribution</h1>

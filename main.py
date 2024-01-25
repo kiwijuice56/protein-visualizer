@@ -50,6 +50,9 @@ ui = UserInterface(protein, window, pdb_renderer, embedding_renderer)
 
 @window.event
 def on_draw():
+    embedding_renderer.detect_mouse()
+    pdb_renderer.detect_mouse()
+
     # Draw the 3D protein
     pdb_renderer.draw()
 

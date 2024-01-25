@@ -83,6 +83,9 @@ class EmbeddingRenderer:
         # Define the pyglet vertex list
         self.vertices = None
         self.outline_vertices = None
+        self.id_vertices = None
+
+        self.hovered_residue = -1
 
         # Default to full-screen render
         self.bounding_box = []
@@ -148,10 +151,15 @@ class EmbeddingRenderer:
             ('c4B', self.GRID_LINE_COLOR * (len(grid_points) // 2))
         )
 
+        rgb_id = [[(i >> 16) & 255, (i >> 8) & 255, i & 255] for i in range(1, len(self.scaled_points) // 2 + 1)]
         self.vertices = pyglet.graphics.vertex_list(
             len(self.protein.embedding_points) // 2,
             ('v2f', self.scaled_points),
             ('c4B', np.zeros(len(self.protein.embedding_points) // 2 * 4, dtype=np.byte)))
+        self.id_vertices = pyglet.graphics.vertex_list(
+            len(self.protein.embedding_points) // 2,
+            ('v2f', self.scaled_points),
+            ('c3B', [x for xs in rgb_id for x in xs]))
         self.update_colors()
 
     def update_colors(self, start=0, end=-1):
@@ -165,6 +173,39 @@ class EmbeddingRenderer:
         for i in range(start, end):
             self.vertices.colors[i * 4: i * 4 + 3] = self.protein.residues[i].color
             self.vertices.colors[i * 4 + 3] = self.POINT_OPACITY
+
+    def detect_mouse(self):
+        glClearColor(*[0] * 4)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_SCISSOR_TEST)
+        glDisable(GL_POINT_SMOOTH)
+
+        glScissor(*self.bounding_box)
+
+        glLoadIdentity()
+        glDisable(GL_DEPTH_TEST)
+        glEnable(GL_BLEND)
+        glOrtho(0, self.window.width, 0, self.window.height, 0, 1000)
+
+        if self.camera.updated:
+            self.set_bounding_box(self.bounding_box)
+            self.camera.updated = False
+
+        glPointSize(int(self.point_size * 2.0))
+        self.id_vertices.draw(pyglet.gl.GL_POINTS)
+
+        read = (GLubyte * 3)(0)
+        glReadPixels(self.camera.input_handler.x, self.camera.input_handler.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, read)
+        selected_id = sum([read[i] << (8 * (2 - i)) for i in range(3)])
+        if not selected_id == 0:
+            self.hovered_residue = selected_id - 1
+        else:
+            self.hovered_residue = -1
+
+        # Clean up
+        glDisable(GL_SCISSOR_TEST)
+        glDisable(GL_DEPTH_TEST)
+        glDisable(GL_BLEND)
 
     def draw(self):
         glEnable(GL_SCISSOR_TEST)

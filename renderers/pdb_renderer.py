@@ -191,17 +191,13 @@ class PDBRenderer:
         self.bounding_box = bounding_box
         self.camera.input_handler.bounding_box = bounding_box
 
-    def draw(self):
+    def detect_mouse(self):
         glClearColor(*[0] * 4)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_POINT_SMOOTH)
-        glEnable(GL_SCISSOR_TEST)
-
         glLoadIdentity()
         glMatrixMode(GL_PROJECTION)
         gluPerspective(self.FOV, self.window.width / float(self.window.height), self.Z_NEAR, self.Z_FAR)
         self.camera.draw()
-
         glScissor(*self.bounding_box)
 
         glPointSize(int(1.5 * self.point_size))
@@ -217,9 +213,14 @@ class PDBRenderer:
         else:
             self.hovered_residue = -1
 
-        glClearColor(*[c / 255.0 for c in self.BACKGROUND_COLOR])
+    def draw(self):
+        glClearColor(*[0] * 4)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glEnable(GL_POINT_SMOOTH)
+        glEnable(GL_SCISSOR_TEST)
         glEnable(GL_LINE_SMOOTH)
+        glEnable(GL_BLEND)
+        glScissor(*self.bounding_box)
 
         glLoadIdentity()
         glMatrixMode(GL_PROJECTION)
