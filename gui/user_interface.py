@@ -49,7 +49,7 @@ class UserInterface:
             go_titles.append(go_title)
 
         self.go_annotation = DropDown(bounding_box=[608, -80, 416, 32], title="GO Annotation",
-                                      options=go_titles,
+                                      options=go_titles, text_width=32,
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
 
         self.update_residue_label()

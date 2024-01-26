@@ -39,7 +39,7 @@ class Residue:
         self.highlighted = False
 
         # A string [GO id] : float [0.0, 1.0] pair of how strongly this residue contributed to a certain GO prediction
-        self.go_map = {}
+        self.go_map = {"GO:XXXXXXX": 1.0}
 
 
 # Contains information about a protein, such as its 3D structure and node embeddings
@@ -164,9 +164,14 @@ class Protein:
             self.cluster_index = data["cluster_indices"]
             self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
             self.go_ids = data["GO_ids"]
-            self.go_names = data["GO_names"]
-            self.scores = data["confidence"]
-            self.current_go_id = self.go_ids[0]
+            if len(self.go_ids) == 0:
+                self.go_ids.append("GO:XXXXXXX")
+                self.go_names = ["none"]
+                self.scores = [0.0]
+            else:
+                self.go_names = data["GO_names"]
+                self.scores = data["confidence"]
+            self.current_go_id = self.go_ids[0] if len(self.go_ids) > 0 else "none"
 
             # Assign saliency to each residue in the protein sequence
             for i, annotation in enumerate(self.go_ids):

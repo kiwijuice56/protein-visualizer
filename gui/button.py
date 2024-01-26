@@ -5,7 +5,7 @@ class Button(pyglet.gui.WidgetBase):
     BACKGROUND_COLOR = (0, 0, 0, 140)
     HOVER_COLOR = (64, 64, 64, 140)
 
-    def __init__(self, bounding_box, text, index, window, batch, bg_batch):
+    def __init__(self, bounding_box, text, index, window, batch, bg_batch, text_width=21):
         pyglet.gui.WidgetBase.__init__(self, *bounding_box)
         self.batch = batch
         self.window = window
@@ -61,8 +61,8 @@ class Button(pyglet.gui.WidgetBase):
 
 
 class DropDown(Button):
-    def __init__(self, bounding_box, title, options, window, batch, bg_batch):
-        Button.__init__(self, bounding_box, '%-21s ▾' % options[0], -1, window, batch, bg_batch)
+    def __init__(self, bounding_box, title, options, window, batch, bg_batch, text_width=21):
+        Button.__init__(self, bounding_box, f'%-{text_width}s ▾' % options[0], -1, window, batch, bg_batch)
         self.batch = batch
         self.window = window
         self.window.push_handlers(self.on_mouse_press, self.on_mouse_motion)
