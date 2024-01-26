@@ -15,7 +15,7 @@ class InputHandler(object):
         self.gesture_pos = [0, 0]
         self.bounding_box = [0, 0, 0, 0]
 
-    def on_mouse_press(self, x, y, button, modifiers):
+    def on_mouse_press(self, x, y, _button, _modifiers):
         self.gesture_pos = [x, y]
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
@@ -27,7 +27,7 @@ class InputHandler(object):
         self.scroll_y = scroll_y
         return pyglet.event.EVENT_HANDLED
 
-    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+    def on_mouse_drag(self, _x, _y, dx, dy, buttons, _modifiers):
         if self.gesture_pos[0] < self.bounding_box[0] or self.gesture_pos[0] - self.bounding_box[0] > self.bounding_box[2]:
             return
         if self.gesture_pos[1] < self.bounding_box[1] or self.gesture_pos[1] - self.bounding_box[1] > self.bounding_box[3]:
@@ -40,6 +40,6 @@ class InputHandler(object):
             self.dy_middle = dy
         return pyglet.event.EVENT_HANDLED
 
-    def on_mouse_motion(self, x, y, dx, dy):
+    def on_mouse_motion(self, x, y, _dx, _dy):
         self.x = x
         self.y = y

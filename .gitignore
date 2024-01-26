@@ -12,3 +12,4 @@ deep_learning/prose/models/__pycache__/*
 gui/__pycache__/*
 renderers/__pycache__/*
 deep_learning/deepfrier/__pycache__/*
+test_proteins/*

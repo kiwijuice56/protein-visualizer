@@ -5,6 +5,7 @@ from pyglet.gl import *
 from gui.button import *
 
 
+# This script is a little messy with many magic numbers since its purpose is so specific!
 class UserInterface:
     PROTEIN_NAMES = {"ala": "alanine", "arg": "arginine", "asn": "asparagine", "asp": "aspartic acid",
                      "asx": "asparagine or aspartic acid", "cys": "cysteine", "glu": "glutamic acid",
@@ -54,7 +55,7 @@ class UserInterface:
 
         self.update_residue_label()
 
-    def on_key_press(self, symbol, modifiers):
+    def on_key_press(self, symbol, _modifiers):
         if symbol == pyglet.window.key.UP:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size + 1)
         if symbol == pyglet.window.key.DOWN:
@@ -62,10 +63,10 @@ class UserInterface:
         if symbol == pyglet.window.key.O:
             self.pdb_renderer.outline = not self.pdb_renderer.outline
 
-    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+    def on_mouse_scroll(self, x, y, _scroll_x, _scroll_y):
         self.on_mouse_motion(x, y, 0, 0)
 
-    def on_mouse_motion(self, x, y, dx, dy):
+    def on_mouse_motion(self, _x, _y, _dx, _dy):
         prev_hl_idx = self.hl_idx
         self.hl_idx = self.embedding_renderer.hovered_residue
         if self.hl_idx == -1:
@@ -191,7 +192,7 @@ class UserInterface:
                 text=f"{self.PROTEIN_NAMES[name] if name in self.PROTEIN_NAMES else 'unknown residue'}\n"
                      f"saliency: {res.go_map[self.protein.current_go_id]}",
                 font_name="Consolas", multiline=True,
-                font_size=16, x=16, y=-self.window.height + 96+8, width=self.window.width,
+                font_size=16, x=16, y=-self.window.height + 104, width=self.window.width,
                 anchor_x="left", anchor_y="top")
             info_doc.draw()
 

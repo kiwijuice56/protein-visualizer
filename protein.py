@@ -57,31 +57,35 @@ class Protein:
     PENGUIN = 10
     LEMON = 11
 
-    poisson_palette = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
+    POISSON_PALETTE = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
                        (161, 205, 176), (112, 147, 149), (74, 120, 123), (56, 49, 64), (115, 77, 92),
                        (167, 103, 114), (204, 134, 125), (224, 186, 139), (195, 130, 82), (161, 86, 60),
                        (111, 52, 45), (68, 39, 31)]
 
-    grape_palette = [(3, 6, 55), (60, 7, 83), (114, 4, 85), (145, 10, 103), (194, 48, 131)]
+    GRAPE_PALETTE = [(3, 6, 55), (60, 7, 83), (114, 4, 85), (145, 10, 103), (194, 48, 131)]
 
-    monocolor_palette = [(59, 212, 59)]
+    MONOCOLOR_PALETTE = [(59, 212, 59)]
 
-    penguin_palette = [(43, 48, 58), (146, 220, 229), (238, 229, 233), (124, 124, 124), (214, 73, 51)]
+    PENGUIN_PALETTE = [(43, 48, 58), (146, 220, 229), (238, 229, 233), (124, 124, 124), (214, 73, 51)]
 
-    lemon_palette = [(191, 174, 72), (95, 173, 65), (45, 147, 108), (57, 20, 99), (58, 8, 66)]
+    LEMON_PALETTE = [(191, 174, 72), (95, 173, 65), (45, 147, 108), (57, 20, 99), (58, 8, 66)]
 
-    cpk_colors = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
+    CPK_COLORS = {"C": (64, 58, 64), "O": (219, 73, 70), "N": (70, 110, 219), "S": (235, 208, 56),
                   "P": (235, 145, 56), "_": (255, 255, 255)}
 
     # Codes to color the terminal text
-    output_color = "\033[96m"
-    output_color2 = "\u001b[33m"
+    OUTPUT_COLOR_GOOD = "\033[96m"
+    OUTPUT_COLOR_WORKING = "\u001b[33m"
 
-    def __init__(self, pdb_path, chain_id=None, verbose=False):
+    MAX_OUTLINE_BRIGHTNESS = 90  # 0 to 255
+    HIGHLIGHT_LUMINANCE = 0.35  # 0 to 1
+
+    def __init__(self, pdb_path, prompt_for_chain=True, chain_id=None, verbose=False):
         """
         @param pdb_path: Filepath to .pdb file containing the protein structure
-        @param chain_id: Which chain to load from the .pdb file. Defaults to first chain
+        @param chain_id: The specific protein chain to draw as a string
+        @param prompt_for_chain: Whether the program should ask for chain input or simply default to the first
         @param verbose: Whether extraneous output such as internal warnings are printed
         """
         self.color_mode = self.CLUSTER_INDEX
@@ -90,8 +94,6 @@ class Protein:
         if not verbose:
             filterwarnings("ignore")
 
-        print(self.output_color + "Loading protein structure.")
-
         # Get the full 3D structure from the PDB file
         from Bio.PDB import PDBParser
         bio_structure = PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
@@ -99,10 +101,17 @@ class Protein:
         # Parse the protein name from the file name
         protein_name = "".join(x for x in pdb_path[pdb_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
 
-        # Choose default chain if none specified
+        print(self.OUTPUT_COLOR_GOOD + f"Loading {protein_name} structure.")
+
         chains = [c for c in bio_structure.get_chains()]
         if chain_id is None:
-            chain_id = chains[0].get_id()
+            if len(chains) > 1 and prompt_for_chain:
+                print(f"Multiple chains found: {[chain.get_id() for chain in chains]}. Please select one by typing "
+                      f"its name.")
+                chain_id = input()
+            else:
+                chain_id = chains[0].get_id()
+        protein_name += '_' + chain_id
 
         # Retrieve the requested chain from the .pdb file
         chain = None
@@ -111,7 +120,7 @@ class Protein:
                 chain = other_chain
                 break
 
-        print(self.output_color + f"Rendering chain with ID '{chain_id}' from {[chain.get_id() for chain in chains]}")
+        print(self.OUTPUT_COLOR_GOOD + f"Rendering chain with ID '{chain_id}'.")
 
         # Parse the .pdb file for the protein sequence
         physical_record = None
@@ -142,21 +151,21 @@ class Protein:
             self.atoms.extend(residue_atoms)
 
         if not isfile(f"data/{protein_name}_data.json"):
-            print(self.output_color2 + "Cache for this protein not found in the 'data' directory.")
-            print(self.output_color2 + "Generating embeddings.")
+            print(self.OUTPUT_COLOR_WORKING + "Cache for this protein not found in the 'data' directory.")
+            print(self.OUTPUT_COLOR_WORKING + "Generating embeddings.")
 
             data = self.generate_embeddings(self.sequence)
 
-            print(self.output_color2 + "Generating contact map.")
+            print(self.OUTPUT_COLOR_WORKING + "Generating contact map.")
             contact_map = self.generate_contact_map(self.residues)
-            print(self.output_color2 + "Generating GO annotations.")
+            print(self.OUTPUT_COLOR_WORKING + "Generating GO annotations.")
 
             data.update(self.generate_go_annotations(self.sequence, contact_map)["query_prot"])
 
             with open(f"data/{protein_name}_data.json", 'w') as f:
                 dump(data, f, indent=1)
         else:
-            print(self.output_color + "Cache for this protein was found in the 'data' directory.")
+            print(self.OUTPUT_COLOR_GOOD + "Cache for this protein was found in the 'data' directory.")
 
         with open(f"data/{protein_name}_data.json", 'r') as f:
             data = load(f)
@@ -178,7 +187,6 @@ class Protein:
                 for residue in self.residues:
                     residue.go_map[annotation] = data["saliency_maps"][i][residue.index]
 
-        print(self.output_color + "All calculations complete. Preparing to render.")
         self.update_colors()
 
     def update_colors(self, new_color_mode=None, new_color_palette=None):
@@ -221,24 +229,24 @@ class Protein:
                     case self.RAINBOW:
                         new_color = Color(hue=x * 0.7, saturation=0.6, luminance=0.5)
                     case self.POISSON:
-                        new_color.rgb = get_color_from_palette(self.poisson_palette)
+                        new_color.rgb = get_color_from_palette(self.POISSON_PALETTE)
                     case self.GRAPE:
-                        new_color.rgb = get_color_from_palette(self.grape_palette)
+                        new_color.rgb = get_color_from_palette(self.GRAPE_PALETTE)
                     case self.MONOCOLOR:
-                        new_color.rgb = get_color_from_palette(self.monocolor_palette)
+                        new_color.rgb = get_color_from_palette(self.MONOCOLOR_PALETTE)
                     case self.PENGUIN:
-                        new_color.rgb = get_color_from_palette(self.penguin_palette)
+                        new_color.rgb = get_color_from_palette(self.PENGUIN_PALETTE)
                     case self.LEMON:
-                        new_color.rgb = get_color_from_palette(self.lemon_palette)
+                        new_color.rgb = get_color_from_palette(self.LEMON_PALETTE)
                 new_color.set_luminance(new_color.get_luminance() * luminance)
             if residue.highlighted:
-                new_color.set_luminance(min(1.0, new_color.get_luminance() + 0.35))
+                new_color.set_luminance(min(1.0, new_color.get_luminance() + self.HIGHLIGHT_LUMINANCE))
             return [int(b * 255) for b in new_color.rgb]
 
         luminance = residue.go_map[self.current_go_id]
         luminance *= luminance
 
-        residue.outline_color = [int(luminance * 86)] * 3
+        residue.outline_color = [int(luminance * self.MAX_OUTLINE_BRIGHTNESS)] * 3
 
         for atom in residue.atoms:
             atom.outline_color = residue.outline_color
@@ -260,13 +268,13 @@ class Protein:
 
                 for atom in residue.atoms:
                     color = Color()
-                    color.rgb = [c / 255.0 for c in self.cpk_colors[atom.bio_atom.get_id()[0]]]
+                    color.rgb = [c / 255.0 for c in self.CPK_COLORS[atom.bio_atom.get_id()[0]]]
                     color.set_luminance(color.get_luminance() * luminance)
                     if residue.highlighted:
-                        color.set_luminance(min(1.0, color.get_luminance() + 0.35))
+                        color.set_luminance(min(1.0, color.get_luminance() + self.HIGHLIGHT_LUMINANCE))
                     atom.color = [int(c * 255) for c in color.rgb]
 
-    # Taken from https://github.com/tbepler/prose
+    # Adapted from https://github.com/tbepler/prose
     @staticmethod
     def generate_embeddings(sequence):
         """
