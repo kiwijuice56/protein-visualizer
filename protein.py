@@ -120,7 +120,7 @@ class Protein:
                 chain = other_chain
                 break
 
-        print(self.OUTPUT_COLOR_GOOD + f"Rendering chain with ID '{chain_id}'.")
+        print(self.OUTPUT_COLOR_GOOD + f"Loading chain with ID '{chain_id}'.")
 
         # Parse the .pdb file for the protein sequence
         physical_record = None

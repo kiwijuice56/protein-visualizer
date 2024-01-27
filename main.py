@@ -51,11 +51,11 @@ else:
 
 # Initialize the protein
 protein = Protein(file, chain_id=chain_id, prompt_for_chain=visible_window)
-
+print(f"{DEFAULT_COLOR}Processing complete.")
 
 # If running the program from a command line, quit and do not show the window
 if not visible_window:
-    exit()
+    sys.exit()
 
 # Initialize window
 window = pyglet.window.Window(resizable=True, vsync=0)
