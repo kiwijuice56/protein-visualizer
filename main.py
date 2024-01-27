@@ -34,7 +34,7 @@ print(f"{DEFAULT_COLOR}-" * 8)
 # Accept file input using either Tkinter GUI or command line arguments
 if len(sys.argv) > 1:
     file = sys.argv[1]
-    chain_id = sys.argv[2]
+    chain_id = sys.argv[2] if len(sys.argv) > 2 else None
     visible_window = False
 else:
     print("Select a .pdb file to render.")

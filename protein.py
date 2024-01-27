@@ -39,7 +39,7 @@ class Residue:
         self.highlighted = False
 
         # A string [GO id] : float [0.0, 1.0] pair of how strongly this residue contributed to a certain GO prediction
-        self.go_map = {"GO:XXXXXXX": 1.0}
+        self.go_map = {"GO:-------": 1.0}
 
 
 # Contains information about a protein, such as its 3D structure and node embeddings
@@ -173,19 +173,21 @@ class Protein:
             self.cluster_index = data["cluster_indices"]
             self.cluster_count = len(set(self.cluster_index)) - (1 if -1 in self.cluster_index else 0)
             self.go_ids = data["GO_ids"]
-            if len(self.go_ids) == 0:
-                self.go_ids.append("GO:XXXXXXX")
-                self.go_names = ["none"]
-                self.scores = [0.0]
-            else:
-                self.go_names = data["GO_names"]
-                self.scores = data["confidence"]
-            self.current_go_id = self.go_ids[0] if len(self.go_ids) > 0 else "none"
+            self.go_names = data["GO_names"]
+            self.scores = data["confidence"]
+
+            self.go_ids.insert(0, "GO:-------")
+            self.go_names.insert(0, "")
+            self.scores.insert(0, 0.0)
+
+            self.current_go_id = self.go_ids[0]
 
             # Assign saliency to each residue in the protein sequence
             for i, annotation in enumerate(self.go_ids):
+                if i == 0:
+                    continue
                 for residue in self.residues:
-                    residue.go_map[annotation] = data["saliency_maps"][i][residue.index]
+                    residue.go_map[annotation] = data["saliency_maps"][i - 1][residue.index]
 
         self.update_colors()
 
