@@ -135,7 +135,8 @@ class Protein:
         self.atoms = []
 
         atom_index = 0
-        for i, bio_residue in enumerate(chain.get_residues()):
+        res_index = 0
+        for bio_residue in chain.get_residues():
             true_index = bio_residue.get_id()[1]
             # Remove any residues not in range (often, these are water molecules)
             if true_index < physical_record.annotations["start"]:
@@ -143,12 +144,14 @@ class Protein:
             if true_index > physical_record.annotations["end"]:
                 continue
             residue_atoms = []
-            residue = Residue(residue_atoms, bio_residue, i)
+            residue = Residue(residue_atoms, bio_residue, res_index)
             for bio_atom in bio_residue.get_atoms():
                 residue_atoms.append(Atom(bio_atom, residue, atom_index))
                 atom_index += 1
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
+
+            res_index += 1
 
         if not isfile(f"data/{protein_name}_data.json"):
             print(self.OUTPUT_COLOR_WORKING + "Cache for this protein not found in the 'data' directory.")
