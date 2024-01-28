@@ -50,7 +50,7 @@
                 <code>protein-visualizer-x.x/data/[protein_name]_data.json</code> to reduce load times the next time the
                 program is run with the selected protein.
             </p>
-            <p>If you wish to use the prediction data yourself, you can parse through this file.
+            <p>If you wish to use the prediction data yourself, you can parse through the data file.
                 The following information is stored as a dictionary for each protein:
             </p>
             <ul>
@@ -65,7 +65,8 @@
                 <li><code>cluster_indices</code>: A list of integers denoting which cluster each amino acid belongs to, with -1 meaning no cluster.</li>
             </ul>
             <p>You can also generate the data file without opening the GUI by executing the program from the command line:
-            <code>protein-visualizer.x.x/main.exe [path_to_pdb_file] [optional_chain_id]</code>.</p>
+            <code>protein-visualizer.x.x/main.exe [path_to_pdb_file] [optional_chain_id]</code>. If no chain is selected,
+            the program will automatically select one rather than prompt the user like when the GUI is opened.</p>
             <p> The <code>protein-visualizer-x.x/saved_models/</code> folder contains the pre-trained models created by
             the ProSE and DeepFRI teams.</p>
 

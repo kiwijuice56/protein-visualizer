@@ -103,28 +103,27 @@ class Protein:
 
         print(self.OUTPUT_COLOR_GOOD + f"Loading {protein_name} structure.")
 
-        chains = [c for c in bio_structure.get_chains()]
+        from Bio.SeqIO import parse
+        records = {r.annotations["chain"]: r for r in parse(pdb_path, "pdb-atom")}
         if chain_id is None:
-            if len(chains) > 1 and prompt_for_chain:
-                print(f"Multiple chains found: {[chain.get_id() for chain in chains]}. Please select one by typing "
-                      f"its name.")
+            if len(records) > 1 and prompt_for_chain:
+                print(f"Multiple chains found: {list(records.keys())}. Please select one by typing its name.")
                 chain_id = input()
             else:
-                chain_id = chains[0].get_id()
+                chain_id = list(records.keys())[0]
         protein_name += '_' + chain_id
 
         # Retrieve the requested chain from the .pdb file
         chain = None
-        for other_chain in chains:
-            if other_chain.get_id() == chain_id:
-                chain = other_chain
+        for bio_chain in [c for c in bio_structure.get_chains()]:
+            if bio_chain.get_id() == chain_id:
+                chain = bio_chain
                 break
+
+        physical_record = records[chain_id]
 
         print(self.OUTPUT_COLOR_GOOD + f"Loading chain with ID '{chain_id}'.")
 
-        # Parse the .pdb file for the protein sequence
-        physical_record = None
-        from Bio.SeqIO import parse
         for other_record in [r for r in parse(pdb_path, "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
@@ -163,7 +162,11 @@ class Protein:
             contact_map = self.generate_contact_map(self.residues)
             print(self.OUTPUT_COLOR_WORKING + "Generating GO annotations.")
 
-            data.update(self.generate_go_annotations(self.sequence, contact_map)["query_prot"])
+            annotations = self.generate_go_annotations(self.sequence, contact_map)
+            if "query_prot" in annotations:
+                data.update(annotations["query_prot"])
+            else:
+                data.update({"GO_ids": [], "GO_names": [], "confidence": []})
 
             with open(f"data/{protein_name}_data.json", 'w') as f:
                 dump(data, f, indent=1)
