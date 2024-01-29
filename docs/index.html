@@ -9,6 +9,7 @@
 <body>
     <nav>
         <a href="#Home"><b>protein-visualizer</b><img src="favicon.ico" id="Icon"/></a>
+        <a href="https://github.com/kiwijuice56/protein-visualizer/releases">Download</a>
         <a href="#Usage">Usage</a>
         <a href="#Code">Code</a>
         <a href="#Attribution">Attribution</a>
@@ -36,16 +37,26 @@
         </section>
         <section id="Usage">
             <h1>Usage</h1>
-            <h2>Installation</h2>
+            <h2>Installation/Running</h2>
             <p>Download and extract the latest release from the
                 <a href="https://github.com/kiwijuice56/protein-visualizer/releases">protein-visualizer release page.</a>
             Run <code>protein-visualizer-x.x/main.exe</code> and select your protein file in the file dialog. If your file
-                has many chains, you can select one by typing its ID in the program terminal when prompted.
+                has many chains, you can select one by typing its ID in the program terminal when prompted. After some
+                time loading, the interactive interface will open with your protein ready to view.
             </p>
+            <h2>Input</h2>
             <p>The visualizer accepts a Protein Data Bank (PDB) format file encoding the structure and sequence of
                 a protein. You can download proteins from
                 <a href="https://www.rcsb.org/">RCSB Protein Data Bank</a> to test out with this program.
             </p>
+            <h2>Controls</h2>
+            <ul>
+                <li><code>Left Mouse</code>: Translate the camera and navigate the embedding space.</li>
+                <li><code>Right/Middle Mouse</code>: Rotate the camera.</li>
+                <li><code>Up/Down Arrow</code>: Increase/decrease atom point size.</li>
+                <li><code>O</code>: Toggles atom outline.</li>
+            </ul>
+            <h2>Using Generated Data</h2>
             <p>Before viewing a protein, the program caches amino acid embeddings and Gene Ontology (GO) annotations in
                 <code>protein-visualizer-x.x/data/[protein_name]_data.json</code> to reduce load times the next time the
                 program is run with the selected protein.
@@ -67,16 +78,6 @@
             <p>You can also generate the data file without opening the GUI by executing the program from the command line:
             <code>protein-visualizer.x.x/main.exe [path_to_pdb_file] [optional_chain_id]</code>. If no chain is selected,
             the program will automatically select one rather than prompt the user like when the GUI is opened.</p>
-            <p> The <code>protein-visualizer-x.x/saved_models/</code> folder contains the pre-trained models created by
-            the ProSE and DeepFRI teams.</p>
-
-            <h2>Controls</h2>
-            <ul>
-                <li><code>Left Mouse</code>: Translate the camera and navigate the embedding space.</li>
-                <li><code>Right/Middle Mouse</code>: Rotate the camera.</li>
-                <li><code>Up/Down Arrow</code>: Increase/decrease atom point size.</li>
-                <li><code>O</code>: Toggles atom outline.</li>
-            </ul>
         </section>
         <section id="Code">
             <h1>Code</h1>
@@ -84,6 +85,20 @@
                 Note that in order to run the code, you must download the most recent release of the program and copy the
                 <code>protein-visualizer-x.x/saved_models/</code> folder into the main directory.
             Feel free to take any part of the code to expand or transform, just make sure you keep the attributions to ProSE and DeepFRI!
+            <h2>File Structure</h2>
+            <ul>
+                <li><code>deep_learning/</code>: Contains ProSE and DeepFRI code that generates amino acid embeddings and
+                GO annotations respectively using the pretrained models.</li>
+                <li><code>docs/</code>: Contains this website.</li>
+                <li><code>gui/</code>: Contains code to draw user interface widgets, such as buttons and the amino acid label.</li>
+                <li><code>img/</code>: Contains icons used when running the program.</li>
+                <li><code>renderers/</code>: Contains code used to draw the 3D protein and the 2D embedding space.</li>
+                <li><code>saved_models/</code> Contains the pre-trained models created by the ProSE and DeepFRI teams. <b>Must be copy
+                    and pasted from the latest release.</b></li>
+                <li><code>batch_predict.py</code>: Example script of using the program from the command line. </li>
+                <li><code>main.py</code>: Entrypoint to the program.</li>
+                <li><code>protein.py</code>: Contains classes that parse and organize data about a protein.</li>
+            </ul>
         </section>
         <section id="Attribution">
             <h1>Attribution</h1>
