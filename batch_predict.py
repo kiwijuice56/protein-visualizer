@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+# Any folder with a collection of .pdb files
 directory = "proteins/"
 
 for file in os.listdir(directory):
