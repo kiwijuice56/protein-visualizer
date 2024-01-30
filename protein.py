@@ -81,9 +81,9 @@ class Protein:
     MAX_OUTLINE_BRIGHTNESS = 90  # 0 to 255
     HIGHLIGHT_LUMINANCE = 0.35  # 0 to 1
 
-    def __init__(self, pdb_path, prompt_for_chain=True, chain_id=None, verbose=False):
+    def __init__(self, protein_path, prompt_for_chain=True, chain_id=None, verbose=False):
         """
-        @param pdb_path: Filepath to .pdb file containing the protein structure
+        @param protein_path: Filepath to .pdb or .cif file containing the protein structure
         @param chain_id: The specific protein chain to draw as a string
         @param prompt_for_chain: Whether the program should ask for chain input or simply default to the first
         @param verbose: Whether extraneous output such as internal warnings are printed
@@ -95,16 +95,20 @@ class Protein:
             filterwarnings("ignore")
 
         # Get the full 3D structure from the PDB file
-        from Bio.PDB import PDBParser
-        bio_structure = PDBParser(QUIET=not verbose).get_structure("struct", pdb_path)
+        if str(protein_path).endswith(".pdb"):
+            from Bio.PDB import MMCIFParser
+            bio_structure = MMCIFParser(QUIET=not verbose).get_structure("struct", protein_path)
+        else:
+            from Bio.PDB import PDBParser
+            bio_structure = PDBParser(QUIET=not verbose).get_structure("struct", protein_path)
 
         # Parse the protein name from the file name
-        protein_name = "".join(x for x in pdb_path[pdb_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
+        protein_name = "".join(x for x in protein_path[protein_path.rfind("/"):-4] if x.isalnum() or x in "_-").lower()
 
         print(self.OUTPUT_COLOR_GOOD + f"Loading {protein_name} structure.")
 
         from Bio.SeqIO import parse
-        records = {r.annotations["chain"]: r for r in parse(pdb_path, "pdb-atom")}
+        records = {r.annotations["chain"]: r for r in parse(protein_path, "cif-atom" if str(protein_path) else "pdb-atom")}
         if chain_id is None:
             if len(records) > 1 and prompt_for_chain:
                 print(f"Multiple chains found: {list(records.keys())}. Please select one by typing its name.")
@@ -124,7 +128,7 @@ class Protein:
 
         print(self.OUTPUT_COLOR_GOOD + f"Loading chain with ID '{chain_id}'.")
 
-        for other_record in [r for r in parse(pdb_path, "pdb-atom")]:
+        for other_record in [r for r in parse(protein_path, "cif-atom" if str(protein_path) else "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
         self.sequence = ''.join([r for r in str(physical_record.seq) if r not in "-*X"])

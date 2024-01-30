@@ -43,7 +43,7 @@ else:
     root.iconbitmap("img/icon.ico")
     root.withdraw()
 
-    file = filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb')])
+    file = filedialog.askopenfilename(title="Select a protein file", filetypes=[('Protein Data Bank', '.pdb'), ('ModelCIF', '.cif')])
     root.destroy()
 
     chain_id = None
