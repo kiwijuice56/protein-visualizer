@@ -94,8 +94,8 @@ class Protein:
         if not verbose:
             filterwarnings("ignore")
 
-        # Get the full 3D structure from the PDB file
-        if str(protein_path).endswith(".pdb"):
+        # Get the full 3D structure from the protein file
+        if str(protein_path).endswith(".cif"):
             from Bio.PDB import MMCIFParser
             bio_structure = MMCIFParser(QUIET=not verbose).get_structure("struct", protein_path)
         else:
@@ -108,7 +108,7 @@ class Protein:
         print(self.OUTPUT_COLOR_GOOD + f"Loading {protein_name} structure.")
 
         from Bio.SeqIO import parse
-        records = {r.annotations["chain"]: r for r in parse(protein_path, "cif-atom" if str(protein_path) else "pdb-atom")}
+        records = {r.annotations["chain"]: r for r in parse(protein_path, "cif-atom" if str(protein_path).endswith(".cif") else "pdb-atom")}
         if chain_id is None:
             if len(records) > 1 and prompt_for_chain:
                 print(f"Multiple chains found: {list(records.keys())}. Please select one by typing its name.")
@@ -128,7 +128,7 @@ class Protein:
 
         print(self.OUTPUT_COLOR_GOOD + f"Loading chain with ID '{chain_id}'.")
 
-        for other_record in [r for r in parse(protein_path, "cif-atom" if str(protein_path) else "pdb-atom")]:
+        for other_record in [r for r in parse(protein_path, "cif-atom" if str(protein_path).endswith(".cif") else "pdb-atom")]:
             if other_record.annotations["chain"] == chain_id:
                 physical_record = other_record
         self.sequence = ''.join([r for r in str(physical_record.seq) if r not in "-*X"])
