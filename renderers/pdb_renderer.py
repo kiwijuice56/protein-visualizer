@@ -82,10 +82,10 @@ class PDBRenderer:
     GRID_LINE_COUNT = 16
     BACKGROUND_COLOR = (0, 0, 0, 0)
 
-    SKY_COLOR1 = (114, 136, 142)
-    SKY_COLOR2 = (149, 169, 176)
-    GROUND_COLOR1 = (40, 50, 55)
-    GROUND_COLOR2 = (51, 64, 69)
+    SKY_COLOR1 = (64, 64, 64)
+    SKY_COLOR2 = (92, 92, 92)
+    GROUND_COLOR1 = (48, 48, 48)
+    GROUND_COLOR2 = (59, 59, 59)
     SKY_DISTANCE = 1000.0
     HORIZON_SIZE1 = 0.3
     HORIZON_SIZE2 = 0.1
@@ -108,6 +108,8 @@ class PDBRenderer:
         """
         self.window = window
         self.protein = protein
+        self.save_image = False
+        self.transparent_save_image = False
 
         self.point_size = 0
         self.set_point_size(point_size)
@@ -241,14 +243,16 @@ class PDBRenderer:
              self.SKY_COLOR2 * 2 + self.SKY_COLOR1 * 2 + self.SKY_COLOR1 * 4
              )
         )
-        quad_list.draw(GL_QUADS)
+        if not self.transparent_save_image:
+            quad_list.draw(GL_QUADS)
 
         glLoadIdentity()
         glMatrixMode(GL_PROJECTION)
         gluPerspective(self.FOV, self.window.width / float(self.window.height), self.Z_NEAR, self.Z_FAR)
         self.camera.draw()
 
-        self.grid_list.draw(GL_LINES)
+        if not self.transparent_save_image:
+            self.grid_list.draw(GL_LINES)
 
         glEnable(GL_POINT_SMOOTH)
         if self.outline:
@@ -259,6 +263,11 @@ class PDBRenderer:
         glPointSize(self.point_size)
         glEnable(GL_DEPTH_TEST)
         self.atom_vertices.draw(GL_POINTS)
+
+        if self.save_image or self.transparent_save_image:
+            pyglet.image.get_buffer_manager().get_color_buffer().save('screenshot.png')
+            self.save_image = False
+            self.transparent_save_image = False
 
         # Clean up
         glDisable(GL_SCISSOR_TEST)

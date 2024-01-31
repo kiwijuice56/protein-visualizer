@@ -257,6 +257,7 @@ class Protein:
 
         luminance = residue.go_map[self.current_go_id]
         luminance *= luminance
+        luminance = min(1.0, luminance + 0.1)
 
         residue.outline_color = [int(luminance * self.MAX_OUTLINE_BRIGHTNESS)] * 3
 

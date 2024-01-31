@@ -62,6 +62,8 @@ class UserInterface:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size - 1)
         if symbol == pyglet.window.key.O:
             self.pdb_renderer.outline = not self.pdb_renderer.outline
+        if symbol == pyglet.window.key.S:
+            self.pdb_renderer.transparent_save_image = True
 
     def on_mouse_scroll(self, x, y, _scroll_x, _scroll_y):
         self.on_mouse_motion(x, y, 0, 0)
