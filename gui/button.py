@@ -3,9 +3,9 @@ import pyglet
 
 class Button(pyglet.gui.WidgetBase):
     BACKGROUND_COLOR = (0, 0, 0, 140)
-    HOVER_COLOR = (64, 64, 64, 140)
+    HOVER_COLOR = (48, 48, 48, 140)
 
-    def __init__(self, bounding_box, text, index, window, batch, bg_batch, text_width=21):
+    def __init__(self, bounding_box, text, index, window, batch, bg_batch):
         pyglet.gui.WidgetBase.__init__(self, *bounding_box)
         self.batch = batch
         self.window = window
@@ -22,7 +22,7 @@ class Button(pyglet.gui.WidgetBase):
             text=self.text, font_name="Consolas", multiline=True,
             font_size=16, x=self.x, y=self.y + 28, width=self.width,
             anchor_x="left", anchor_y="top", batch=self.batch)
-        self.visible = False
+        self.visible = True
         self.pressed = False
         self.hovered = False
 
@@ -72,6 +72,7 @@ class DropDown(Button):
         for i, option in enumerate(self.options):
             button = Button([self.x, self.y - 32 * (i + 1), self.width, 32], self.options[i], i, self.window, self.batch, bg_batch)
             self.buttons.append(button)
+            button.hide()
 
         self.title = pyglet.text.Label(
             text=title, font_name="Consolas", multiline=True,

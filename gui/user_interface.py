@@ -36,11 +36,12 @@ class UserInterface:
         self.res_doc = pyglet.text.document.FormattedDocument()
         self.res_layout = None
 
-        self.color_mode = DropDown(bounding_box=[16, -80, 280, 32], title="Coloring Mode",
+        self.color_mode = DropDown(bounding_box=[16, -80 - 48, 280, 32], title="Coloring Mode",
                                    options=["Functional Similarity", "Amino Acid Order", "Atom Type", "Residue Type"],
                                    window=window, batch=self.batch, bg_batch=self.bg_batch)
-        self.color_palette = DropDown(bounding_box=[312, -80, 280, 32], title="Color Palette",
-                                      options=["Rainbow", "Monocolor", "Nature", "Penguin", "Grape", "Lemon", "Mulberry"],
+        self.color_palette = DropDown(bounding_box=[312, -80 - 48, 280, 32], title="Color Palette",
+                                      options=["Rainbow", "Monocolor", "Nature", "Penguin", "Grape", "Lemon",
+                                               "Mulberry"],
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
         go_titles = []
         for i in range(len(self.protein.go_ids)):
@@ -49,9 +50,15 @@ class UserInterface:
                 go_title = go_title[0: 32]
             go_titles.append(go_title)
 
-        self.go_annotation = DropDown(bounding_box=[608, -80, 416, 32], title="GO Annotation",
+        self.go_annotation = DropDown(bounding_box=[608, -80 - 48, 416, 32], title="GO Annotation",
                                       options=go_titles, text_width=32,
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
+
+        self.screenshot = Button(bounding_box=[16, -48, 180, 32], text="Save Image",
+                                 window=window, batch=self.batch, bg_batch=self.batch, index=0)
+
+        self.outline = Button(bounding_box=[16 + 180 + 16, -48, 180, 32], text="Toggle Outline",
+                              window=window, batch=self.batch, bg_batch=self.batch, index=0)
 
         self.update_residue_label()
 
@@ -60,10 +67,6 @@ class UserInterface:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size + 1)
         if symbol == pyglet.window.key.DOWN:
             self.pdb_renderer.set_point_size(self.pdb_renderer.point_size - 1)
-        if symbol == pyglet.window.key.O:
-            self.pdb_renderer.outline = not self.pdb_renderer.outline
-        if symbol == pyglet.window.key.S:
-            self.pdb_renderer.transparent_save_image = True
 
     def on_mouse_scroll(self, x, y, _scroll_x, _scroll_y):
         self.on_mouse_motion(x, y, 0, 0)
@@ -179,10 +182,18 @@ class UserInterface:
                 self.pdb_renderer.update_colors()
                 self.embedding_renderer.update_colors()
 
+        if self.screenshot.pressed:
+            self.screenshot.pressed = False
+            self.pdb_renderer.transparent_save_image = True
+            self.pdb_renderer.outline = not self.pdb_renderer.outline
+        if self.outline.pressed:
+            self.outline.pressed = False
+            self.pdb_renderer.outline = not self.pdb_renderer.outline
+
         go_doc = pyglet.text.Label(
             text=f"{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
             font_name="Consolas", multiline=True,
-            font_size=16, x=1040, y=-16, width=self.window.width,
+            font_size=16, x=1040, y=-16 - 48, width=self.window.width,
             anchor_x="left", anchor_y="top")
         go_doc.draw()
 
