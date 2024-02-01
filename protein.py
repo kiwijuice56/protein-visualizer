@@ -48,14 +48,16 @@ class Protein:
     CLUSTER_INDEX = 1  # Color residues by their associated cluster in the embedding space
     RESIDUE_INDEX = 2  # Color residues by their index in the amino acid sequence
     ATOM_TYPE = 3  # Color residues by their atoms using CPK coloring
+    RESIDUE_TYPE = 4 # Colors by identity of each amino acid
 
     # Color palettes (for color modes 1 and 2)
     RAINBOW = 6
     MONOCOLOR = 7
     POISSON = 8
-    GRAPE = 9
-    PENGUIN = 10
+    PENGUIN = 9
+    GRAPE = 10
     LEMON = 11
+    MULBERRY = 12
 
     POISSON_PALETTE = [(187, 176, 148), (128, 118, 101), (89, 82, 70), (51, 51, 51), (25, 31, 34), (47, 68, 67),
                        (59, 94, 88), (90, 140, 108), (139, 180, 141), (192, 208, 165), (247, 239, 199),
@@ -64,6 +66,8 @@ class Protein:
                        (111, 52, 45), (68, 39, 31)]
 
     GRAPE_PALETTE = [(3, 6, 55), (60, 7, 83), (114, 4, 85), (145, 10, 103), (194, 48, 131)]
+
+    MULBERRY_PALETTE = [(197, 235, 195), (183, 200, 181), (167, 144, 165), (135, 92, 116), (84, 65, 78), (177, 133, 167), (195, 162, 158), (232, 218, 197), (255, 244, 233)]
 
     MONOCOLOR_PALETTE = [(59, 212, 59)]
 
@@ -136,6 +140,7 @@ class Protein:
         # Parse the .pdb file for structure data
         self.residues = []
         self.atoms = []
+        self.residue_map = {}
 
         atom_index = 0
         res_index = 0
@@ -153,7 +158,8 @@ class Protein:
                 atom_index += 1
             self.residues.append(residue)
             self.atoms.extend(residue_atoms)
-
+            if not bio_residue.get_resname() in self.residue_map:
+                self.residue_map[bio_residue.get_resname()] = len(self.residue_map)
             res_index += 1
 
         if not isfile(f"data/{protein_name}_data.json"):
@@ -250,6 +256,8 @@ class Protein:
                         new_color.rgb = get_color_from_palette(self.PENGUIN_PALETTE)
                     case self.LEMON:
                         new_color.rgb = get_color_from_palette(self.LEMON_PALETTE)
+                    case self.MULBERRY:
+                        new_color.rgb = get_color_from_palette(self.MULBERRY_PALETTE)
                 new_color.set_luminance(new_color.get_luminance() * luminance)
             if residue.highlighted:
                 new_color.set_luminance(min(1.0, new_color.get_luminance() + self.HIGHLIGHT_LUMINANCE))
@@ -286,6 +294,11 @@ class Protein:
                     if residue.highlighted:
                         color.set_luminance(min(1.0, color.get_luminance() + self.HIGHLIGHT_LUMINANCE))
                     atom.color = [int(c * 255) for c in color.rgb]
+            case self.RESIDUE_TYPE:
+                color = get_color(self.residue_map[residue.bio_residue.get_resname()] / len(self.residue_map))
+                for atom in residue.atoms:
+                    atom.color = color
+                residue.color = color
 
     # Adapted from https://github.com/tbepler/prose
     @staticmethod

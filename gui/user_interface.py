@@ -37,10 +37,10 @@ class UserInterface:
         self.res_layout = None
 
         self.color_mode = DropDown(bounding_box=[16, -80, 280, 32], title="Coloring Mode",
-                                   options=["Functional Similarity", "Amino Acid Order", "Atom Type"],
+                                   options=["Functional Similarity", "Amino Acid Order", "Atom Type", "Residue Type"],
                                    window=window, batch=self.batch, bg_batch=self.bg_batch)
         self.color_palette = DropDown(bounding_box=[312, -80, 280, 32], title="Color Palette",
-                                      options=["Rainbow", "Monocolor", "Nature", "Grape", "Penguin", "Lemon"],
+                                      options=["Rainbow", "Monocolor", "Nature", "Penguin", "Grape", "Lemon", "Mulberry"],
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
         go_titles = []
         for i in range(len(self.protein.go_ids)):
