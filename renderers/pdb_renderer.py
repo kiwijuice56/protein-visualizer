@@ -266,6 +266,7 @@ class PDBRenderer:
 
         if self.save_image or self.transparent_save_image:
             pyglet.image.get_buffer_manager().get_color_buffer().save('screenshot.png')
+            print("Screenshot saved!")
             self.save_image = False
             self.transparent_save_image = False
 

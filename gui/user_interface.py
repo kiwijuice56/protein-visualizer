@@ -36,29 +36,30 @@ class UserInterface:
         self.res_doc = pyglet.text.document.FormattedDocument()
         self.res_layout = None
 
-        self.color_mode = DropDown(bounding_box=[16, -80 - 48, 280, 32], title="Coloring Mode",
+        self.color_mode = DropDown(bounding_box=[16, -86, 280, 32], title="Coloring Mode",
                                    options=["Functional Similarity", "Amino Acid Order", "Atom Type", "Residue Type"],
-                                   window=window, batch=self.batch, bg_batch=self.bg_batch)
-        self.color_palette = DropDown(bounding_box=[312, -80 - 48, 280, 32], title="Color Palette",
+                                   window=window, batch=self.batch, bg_batch=self.bg_batch, text_width=21)
+        self.color_palette = DropDown(bounding_box=[312, -86, 187, 32], title="Color Palette",
                                       options=["Rainbow", "Monocolor", "Nature", "Penguin", "Grape", "Lemon",
                                                "Mulberry"],
-                                      window=window, batch=self.batch, bg_batch=self.bg_batch)
+                                      window=window, batch=self.batch, bg_batch=self.bg_batch, text_width=13)
         go_titles = []
         for i in range(len(self.protein.go_ids)):
-            go_title = self.protein.go_ids[i][3:] + " " + self.protein.go_names[i]
-            if len(go_title) > 32:
-                go_title = go_title[0: 32]
-            go_titles.append(go_title)
+            go_title = self.protein.go_ids[i] + " " + self.protein.go_names[i]
+            if len(go_title) > 35:
+                go_title = go_title[0: 35]
+            go_title = '%-35s' % go_title
+            go_titles.append(go_title + '(%.2f)' % (self.protein.scores[i]))
 
-        self.go_annotation = DropDown(bounding_box=[608, -80 - 48, 416, 32], title="GO Annotation",
-                                      options=go_titles, text_width=32,
+        self.go_annotation = DropDown(bounding_box=[515, -86, 522, 32], title="GO Annotation",
+                                      options=go_titles, text_width=40,
                                       window=window, batch=self.batch, bg_batch=self.bg_batch)
 
-        self.screenshot = Button(bounding_box=[16, -48, 180, 32], text="Save Image",
-                                 window=window, batch=self.batch, bg_batch=self.batch, index=0)
+        self.screenshot = Button(bounding_box=[515 + 522 + 16, -86, 140, 32], text="Save Render",
+                                 window=window, batch=self.batch, bg_batch=self.bg_batch, index=0)
 
-        self.outline = Button(bounding_box=[16 + 180 + 16, -48, 180, 32], text="Toggle Outline",
-                              window=window, batch=self.batch, bg_batch=self.batch, index=0)
+        self.outline = Button(bounding_box=[515 + 522 + 140 + 32, -86, 180, 32], text="Toggle Outline",
+                              window=window, batch=self.batch, bg_batch=self.bg_batch, index=0)
 
         self.update_residue_label()
 
@@ -166,7 +167,7 @@ class UserInterface:
             if button.pressed:
                 button.pressed = False
                 self.color_palette.close()
-                self.color_palette.label.text = '%-21s ▾' % button.label.text
+                self.color_palette.label.text = '%-13s ▾' % button.label.text
                 self.protein.update_colors(new_color_palette=button.index + 6)
                 self.pdb_renderer.update_colors()
                 self.embedding_renderer.update_colors()
@@ -174,7 +175,7 @@ class UserInterface:
             if button.pressed:
                 button.pressed = False
                 self.go_annotation.close()
-                self.go_annotation.label.text = '%-32s ▾' % button.label.text
+                self.go_annotation.label.text = '%-40s ▾' % button.label.text
                 self.go_idx = button.index
                 self.protein.current_go_id = self.protein.go_ids[self.go_idx]
 
@@ -185,17 +186,9 @@ class UserInterface:
         if self.screenshot.pressed:
             self.screenshot.pressed = False
             self.pdb_renderer.transparent_save_image = True
-            self.pdb_renderer.outline = not self.pdb_renderer.outline
         if self.outline.pressed:
             self.outline.pressed = False
             self.pdb_renderer.outline = not self.pdb_renderer.outline
-
-        go_doc = pyglet.text.Label(
-            text=f"{self.protein.go_ids[self.go_idx]}: {self.protein.go_names[self.go_idx]}\n{'%.2f' % (self.protein.scores[self.go_idx] * 100)}% confidence",
-            font_name="Consolas", multiline=True,
-            font_size=16, x=1040, y=-16 - 48, width=self.window.width,
-            anchor_x="left", anchor_y="top")
-        go_doc.draw()
 
         if self.hl_idx != -1:
             res = self.protein.residues[self.hl_idx]
