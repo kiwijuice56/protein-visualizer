@@ -15,7 +15,7 @@ from tkinter import filedialog
 from ctypes import windll
 
 
-VERSION = "1.0"
+VERSION = "1.1"
 URL_COLOR = "\u001b[35m"
 DEFAULT_COLOR = "\u001b[37m"
 EMBEDDING_SPACE_WIDTH = 0.3
